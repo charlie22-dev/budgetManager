@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center anim-fade-in px-4">
+    <!-- Decorative Ambient Glow Background -->
+    <div class="fixed top-10 left-1/3 w-[500px] h-[500px] bg-emerald-500/10 dark:bg-emerald-600/10 rounded-full blur-[150px] pointer-events-none -z-10 animate-pulse"></div>
+    <div class="fixed bottom-10 right-1/3 w-[500px] h-[500px] bg-teal-500/10 dark:bg-teal-600/10 rounded-full blur-[150px] pointer-events-none -z-10 animate-pulse" style="animation-delay: 1s;"></div>
+
+    <!-- Main Register Container -->
+    <div class="w-full max-w-md w-full relative z-10 anim-slide-up my-8">
+        
+        <!-- App Branding -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-white dark:bg-dark-surface shadow-xl shadow-emerald-500/10 dark:shadow-emerald-500/5 mb-6 group transition-all duration-500 hover:scale-110 border border-slate-100 dark:border-dark-border">
+                <i class="fas fa-leaf text-3xl text-emerald-600 dark:text-emerald-500 transition-transform duration-500 group-hover:rotate-12"></i>
+            </div>
+            <h1 class="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Create Account</h1>
+            <p class="text-slate-500 dark:text-gray-400 font-medium text-sm">Join TipidTracker and manage your finances</p>
+        </div>
+
+        <!-- The Signup Card -->
+        <div class="bg-white/80 dark:bg-[#1e293b]/80 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 rounded-3xl shadow-2xl p-8 transition-all relative overflow-hidden group">
+            
+            <form method="POST" action="{% url 'account_signup' %}" class="space-y-6" id="signupForm">
+                {% csrf_token %}
+                
+                <!-- Validation Errors block -->
+                {% if form.errors %}
+                <div class="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl text-rose-600 dark:text-rose-400 text-sm font-medium mb-6 flex gap-3 items-start">
+                    <i class="fas fa-exclamation-circle mt-0.5"></i>
+                    <div>
+                        <p class="font-bold mb-1">Please correct the following errors:</p>
+                        <ul class="list-disc list-inside space-y-1">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Dynamic Form Fields -->
+                {% for field in form %}
+                {% if field.name != 'remember' %}
+                <div class="space-y-2 relative" x-data="{ focused: false, val: '', show: false }">
+                    <label for="{{ field.id_for_label }}" class="absolute left-10 transition-all duration-200 pointer-events-none text-slate-400 dark:text-slate-500 font-medium z-10"
+                           :class="focused || val.length > 0 ? '-top-3 text-xs bg-[linear-gradient(180deg,transparent_50%,white_50%)] dark:bg-[linear-gradient(180deg,transparent_50%,#1e293b_50%)] px-1 text-emerald-600 dark:text-emerald-400' : 'top-3.5 text-sm bg-transparent'">
+                        {{ field.label }}
+                    </label>
+                    <div class="relative flex items-center w-full">
+                        {% if 'password' in field.name|lower %}
+                            <i class="fas fa-lock absolute left-4 text-slate-400 dark:text-slate-500 transition-colors z-10" :class="focused ? 'text-emerald-600 dark:text-emerald-500' : ''"></i>
+                        {% elif 'email' in field.name|lower %}
+                            <i class="fas fa-envelope absolute left-4 text-slate-400 dark:text-slate-500 transition-colors z-10" :class="focused ? 'text-emerald-600 dark:text-emerald-500' : ''"></i>
+                        {% else %}
+                            <i class="fas fa-user absolute left-4 text-slate-400 dark:text-slate-500 transition-colors z-10" :class="focused ? 'text-emerald-600 dark:text-emerald-500' : ''"></i>
+                        {% endif %}
+                        
+                        <input :type="('{{ field.name }}'.includes('password') && !show) ? 'password' : 'text'" 
+                               name="{{ field.name }}" id="{{ field.id_for_label }}" {% if field.field.required %}required{% endif %}
+                               class="w-full flex-1 !pl-11 {% if 'password' in field.name %}!pr-12{% else %}!pr-4{% endif %} !py-3.5 bg-transparent border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:border-emerald-600 dark:focus:border-emerald-500 focus:ring-4 focus:ring-emerald-600/10 dark:focus:ring-emerald-500/20 transition-all outline-none"
+                               @focus="focused = true" @blur="focused = false" x-model="val" >
+                        
+                        {% if 'password' in field.name|lower %}
+                        <button type="button" @click="show = !show" class="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors outline-none focus:text-emerald-600 focus:scale-110 z-10">
+                            <i class="fas" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+
+                <!-- Terms & Conditions -->
+                <div class="flex items-start mt-6 pt-2">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <div class="relative flex items-center justify-center w-5 h-5 mt-0.5 rounded border border-slate-300 dark:border-slate-600 bg-transparent group-hover:border-emerald-500 transition-colors shrink-0">
+                            <input type="checkbox" required class="opacity-0 absolute w-full h-full cursor-pointer peer">
+                            <i class="fas fa-check text-[10px] text-white opacity-0 peer-checked:opacity-100 transition-opacity z-10 pointer-events-none"></i>
+                            <div class="absolute inset-0 bg-emerald-600 rounded opacity-0 peer-checked:opacity-100 scale-50 peer-checked:scale-100 transition-all duration-200 pointer-events-none"></div>
+                        </div>
+                        <span class="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors leading-relaxed">
+                            I agree to the <span class="font-bold text-emerald-600 dark:text-emerald-400">Terms of Service</span> and <span class="font-bold text-emerald-600 dark:text-emerald-400">Privacy Policy</span>.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="signupBtn" class="w-full relative py-4 mt-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl shadow-lg shadow-slate-900/20 dark:shadow-white/10 hover:-translate-y-0.5 hover:shadow-xl hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-[0.98] transition-all overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/10 to-transparent -translate-x-[150%] skew-x-[-20deg] group-hover:animate-shine"></div>
+                    <span id="btnText" class="flex items-center justify-center gap-2">
+                        Get Started <i class="fas fa-arrow-right text-sm transition-transform group-hover:translate-x-1"></i>
+                    </span>
+                    <span id="btnLoader" class="hidden items-center justify-center gap-2">
+                        <i class="fas fa-circle-notch fa-spin"></i> Creating Account...
+                    </span>
+                </button>
+            </form>
+
+            <div class="mt-8 text-center pt-6 border-t border-slate-100 dark:border-slate-800">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Already part of the system?  
+                    <a href="{% url 'account_login' %}" class="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors ml-1 border-b border-transparent hover:border-emerald-600 dark:hover:border-emerald-400">Sign in</a>
+                </p>
+            </div>
+        </div>
+
+        <p class="text-center text-xs font-medium text-slate-500 dark:text-slate-500 mt-10 tracking-widest uppercase opacity-80">
+            Secure Budget Management
+        </p>
+    </div>
+</div>
+
+<style>
+    /* Premium visual effects */
+    @keyframes shine {
+        100% { transform: translateX(150%); }
+    }
+    .animate-shine { animation: shine 1.5s ease-in-out infinite; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('signupForm');
+    const btn = document.getElementById('signupBtn');
+    const btnText = document.getElementById('btnText');
+    const btnLoader = document.getElementById('btnLoader');
+
+    if(form) {
+        form.addEventListener('submit', () => {
+            if(!form.checkValidity()) return; // Don't animate if required fields missing
+            // Disable button visually and show loader
+            btn.classList.add('opacity-90', 'cursor-not-allowed');
+            btnText.classList.add('hidden');
+            btnText.classList.remove('flex');
+            btnLoader.classList.remove('hidden');
+            btnLoader.classList.add('flex');
+            
+            // Disable after a tiny delay so the form can submit
+            setTimeout(() => { btn.disabled = true; }, 10);
+        });
+    }
+});
+</script>
+{% endblock %}

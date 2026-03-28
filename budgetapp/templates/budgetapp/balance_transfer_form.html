@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-card anim-slide-up">
+    <div class="form-title dark:text-white dark:border-dark-border">
+        <i class="fas fa-arrow-right text-blue-500 mr-2"></i> Add to Balance
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="space-y-5">
+            {% for field in form %}
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="text-rose-500 ml-0.5">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                <ul class="errorlist mt-1">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex items-center justify-end gap-3 mt-8 pt-5 border-t border-gray-100 dark:border-dark-border">
+            <a href="{% url 'dashboard' %}" class="px-5 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl transition-all">
+                Cancel
+            </a>
+            <button type="submit"
+                class="px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-lg shadow-blue-500/25 active:scale-95 transition-all"
+                onclick="this.innerHTML='<i class=\'fas fa-spinner fa-spin mr-2\'></i>Saving...'; this.disabled=true; this.form.submit();">
+                Transfer to Balance
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

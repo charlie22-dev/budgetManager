@@ -1,0 +1,685 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">Welcome back! Here's your financial summary.</p>
+        </div>
+
+        <!-- Button group container -->
+        <div class="flex flex-col items-start gap-3">
+            <!-- Row 1: Primary actions -->
+            <div class="flex flex-wrap items-center gap-3">
+                <button type="button" onclick="openModal('fundsModal')" class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95">
+                    <i class="fas fa-plus mr-2 text-indigo-500"></i> Add Funds
+                </button>
+                <button type="button" onclick="openModal('savingsModal')" class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl hover:bg-emerald-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95">
+                    <i class="fas fa-leaf mr-2 text-emerald-500"></i> Add Savings
+                </button>
+                <a href="{% url 'balance_transfer_create' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95">
+                    <i class="fas fa-arrow-right mr-2 text-blue-500"></i> Add Balance
+                </a>
+                <button type="button" onclick="openModal('expenseModal')" class="inline-flex items-center px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-rose-500 to-rose-600 rounded-xl hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 active:scale-95">
+                    <i class="fas fa-plus mr-2"></i> Add Expense
+                </button>
+            </div>
+
+            <!-- Row 2: Danger / Reset actions -->
+            <div class="flex flex-wrap items-center gap-2 self-end">
+                <!-- Time Filters -->
+                <div class="flex bg-slate-100 dark:bg-gray-800 p-1 rounded-lg mr-2">
+                    <a href="?period=weekly" class="px-3 py-1 text-xs font-bold rounded-md {% if period == 'weekly' %}bg-white dark:bg-gray-600 shadow-sm text-indigo-600 dark:text-white{% else %}text-gray-500{% endif %}">Weekly</a>
+                    <a href="?period=monthly" class="px-3 py-1 text-xs font-bold rounded-md {% if period == 'monthly' %}bg-white dark:bg-gray-600 shadow-sm text-indigo-600 dark:text-white{% else %}text-gray-500{% endif %}">Monthly</a>
+                    <a href="?period=all" class="px-3 py-1 text-xs font-bold rounded-md {% if period == 'all' or not period %}bg-white dark:bg-gray-600 shadow-sm text-indigo-600 dark:text-white{% else %}text-gray-500{% endif %}">All Time</a>
+                </div>
+                <!-- Export Dropdown -->
+                <div class="relative mr-2" x-data="{ open: false }">
+                    <button @click="open = !open" @click.away="open = false" type="button" class="inline-flex items-center px-4 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg hover:bg-emerald-100 dark:bg-dark-surface dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-500/10 shadow-sm transition-all focus:outline-none">
+                        <i class="fas fa-file-export mr-1.5"></i> Export Report
+                        <i class="fas fa-chevron-down ml-1.5 text-[10px] transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="open" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
+                         class="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-surface rounded-xl shadow-xl shadow-emerald-500/10 border border-slate-100 dark:border-dark-border z-50 overflow-hidden"
+                         style="display: none;">
+                        <a href="{% url 'export_report' %}?format=excel" class="flex items-center px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border-b border-slate-50 dark:border-dark-border transition-colors group">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                                <i class="fas fa-file-excel"></i>
+                            </div>
+                            Excel (CSV)
+                        </a>
+                        <a href="{% url 'export_report' %}?format=pdf" class="flex items-center px-4 py-3 text-sm font-medium text-slate-700 dark:text-gray-200 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-400 transition-colors group">
+                            <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            PDF Document
+                        </a>
+                    </div>
+                </div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500 mr-1">Reset:</span>
+                <a href="{% url 'income_reset' %}" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 dark:hover:bg-red-500/20 transition-all shadow-sm">
+                    <i class="fas fa-undo mr-1.5"></i> Funds
+                </a>
+                <a href="{% url 'balance_reset' %}" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded-lg hover:bg-amber-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20 dark:hover:bg-orange-500/20 transition-all shadow-sm">
+                    <i class="fas fa-sync-alt mr-1.5"></i> Balance
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Skeleton Cards (hidden after JS loads metrics) -->
+<div id="skeleton-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    {% for i in '1234' %}
+    <div class="skeleton skeleton-card"></div>
+    {% endfor %}
+</div>
+
+<div id="metric-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" style="display:none">
+    <!-- Total Funds -->
+    <a href="{% url 'funds_history' %}" class="block bg-gradient-to-br from-white to-blue-50/30 dark:from-dark-surface dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-blue-100/50 dark:border-dark-border flex items-center gap-4 transform transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-300 cursor-pointer relative overflow-hidden group">
+        <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 relative z-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm group-hover:shadow-blue-200">
+            <i class="fas fa-piggy-bank text-2xl"></i>
+        </div>
+        <div class="relative z-10">
+            <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-gray-400 group-hover:text-blue-500 transition-colors duration-300">Total Funds</p>
+            <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1 metric-number" data-key="total_funds" data-value="{{ monthly_budget|stringformat:'.2f' }}">₱0.00</h3>
+        </div>
+        <div class="absolute -right-4 -bottom-4 text-blue-500/5 transition-all duration-500 group-hover:scale-150 group-hover:rotate-12">
+            <i class="fas fa-piggy-bank text-8xl"></i>
+        </div>
+    </a>
+    
+    <!-- Total Expenses -->
+    <a href="#expenses-table" onclick="document.getElementById('expenses-table').scrollIntoView({behavior:'smooth'})" class="block bg-gradient-to-br from-white to-rose-50/30 dark:from-dark-surface dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-rose-100/50 dark:border-dark-border flex items-center gap-4 transform transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-rose-500/10 hover:border-rose-300 cursor-pointer relative overflow-hidden group">
+        <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-red-500/10 dark:text-red-400 relative z-10 transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3 shadow-sm group-hover:shadow-rose-200">
+            <i class="fas fa-shopping-cart text-2xl"></i>
+        </div>
+        <div class="relative z-10">
+            <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-gray-400 group-hover:text-rose-500 transition-colors duration-300">Total Expenses</p>
+            <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1 metric-number" data-key="total_expenses" data-value="{{ total_expenses|stringformat:'.2f' }}">₱0.00</h3>
+        </div>
+        <div class="absolute -right-4 -bottom-4 text-rose-500/5 transition-all duration-500 group-hover:scale-150 group-hover:rotate-12">
+            <i class="fas fa-shopping-cart text-8xl"></i>
+        </div>
+    </a>
+    
+    <!-- Total Savings -->
+    <a href="{% url 'savings_list' %}" class="block bg-gradient-to-br from-white to-emerald-50/30 dark:from-dark-surface dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-emerald-100/50 dark:border-dark-border flex items-center gap-4 transform transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-300 cursor-pointer relative overflow-hidden group">
+        <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-green-500/10 dark:text-green-400 relative z-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm group-hover:shadow-emerald-200">
+            <i class="fas fa-leaf text-2xl"></i>
+        </div>
+        <div class="relative z-10">
+            <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-gray-400 group-hover:text-emerald-500 transition-colors duration-300">Total Savings</p>
+            <h3 class="text-2xl font-black text-emerald-600 dark:text-green-400 mt-1 metric-number" data-key="total_savings" data-value="{{ total_savings|stringformat:'.2f' }}">₱0.00</h3>
+        </div>
+        <div class="absolute -right-4 -bottom-4 text-emerald-500/5 transition-all duration-500 group-hover:scale-150 group-hover:rotate-12">
+            <i class="fas fa-leaf text-8xl"></i>
+        </div>
+    </a>
+    
+    <!-- Remaining Balance -->
+    <a href="{% url 'balance_history' %}" class="block bg-gradient-to-br from-white to-indigo-50/30 dark:from-dark-surface dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-indigo-100/50 dark:border-dark-border flex items-center gap-4 transform transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-300 cursor-pointer relative overflow-hidden group">
+        <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-primary-500/10 dark:text-primary-400 relative z-10 transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3 shadow-sm group-hover:shadow-indigo-200">
+            <i class="fas fa-wallet text-2xl"></i>
+        </div>
+        <div class="relative z-10">
+            <p class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-gray-400 group-hover:text-indigo-500 transition-colors duration-300">Remaining Balance</p>
+            <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1 metric-number" data-key="remaining_balance" data-value="{{ remaining_balance|stringformat:'.2f' }}">₱0.00</h3>
+        </div>
+        <div class="absolute -right-4 -bottom-4 text-indigo-500/5 transition-all duration-500 group-hover:scale-150 group-hover:rotate-12">
+            <i class="fas fa-wallet text-8xl"></i>
+        </div>
+    </a>
+</div>
+</div>
+
+<!-- INSIGHTS & PROGRESS SECTION -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <!-- Insights -->
+    <div class="bg-gradient-to-br from-indigo-50/50 to-white dark:from-gray-800 dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-indigo-100/50 dark:border-dark-border">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4"><i class="fas fa-lightbulb text-amber-400 mr-2"></i> Smart Insights</h3>
+        {% if insights %}
+            <ul class="space-y-3">
+            {% for insight in insights %}
+                <li class="flex items-start text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <i class="fas fa-check-circle text-indigo-500 mt-0.5 mr-2"></i> {{ insight }}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-sm text-gray-500 italic">Not enough data to generate insights yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Savings Goals -->
+    <div class="bg-white dark:bg-dark-surface rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-border">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white"><i class="fas fa-bullseye text-rose-500 mr-2"></i> Savings Goals</h3>
+            <div class="flex items-center gap-2">
+                <a href="{% url 'savings_list' %}" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 dark:bg-dark-surface dark:text-indigo-400 dark:border-indigo-500/30 dark:hover:bg-indigo-500/10 transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-500/20 active:scale-95">
+                    View All
+                </a>
+                <a href="{% url 'savings_goal_create' %}" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-500 to-violet-500 border border-transparent rounded-lg hover:from-indigo-600 hover:to-violet-600 transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-indigo-500/30 active:scale-95">
+                    New Goal
+                </a>
+            </div>
+        </div>
+        {% if goal_progress %}
+            <div id="savingsGoalsContainer" class="space-y-4 max-h-48 overflow-y-auto pr-2">
+            {% for gp in goal_progress %}
+                <div class="goal-progress-item" data-pk="{{ gp.pk }}">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="font-bold text-gray-700 dark:text-gray-300">{{ gp.name }}</span>
+                        <span class="text-gray-500 font-medium goal-text">₱{{ gp.saved|floatformat:0|intcomma }} / ₱{{ gp.target|floatformat:0|intcomma }}</span>
+                    </div>
+                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 relative">
+                        <div class="h-2 rounded-full transition-all duration-1000 ease-out savings-bar-fill {% if gp.status == 'completed' %}bg-emerald-500{% else %}bg-indigo-500{% endif %}" style="width: 0%" data-width="{{ gp.percent }}%"></div>
+                        {% if gp.status == 'completed' %}<i class="fas fa-star text-amber-400 absolute -right-1 -top-1.5 text-xs drop-shadow-sm"></i>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-sm text-gray-500 italic mt-2">No savings goals set. Start aiming!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Table Container -->
+<div id="expenses-table" class="bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border overflow-hidden scroll-mt-8">
+    <div class="px-6 py-5 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Recent Expenses</h3>
+        {% if expenses %}
+        <a href="{% url 'expense_delete_all' %}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 dark:hover:bg-red-500/20 transition-colors shadow-sm">
+            <i class="fas fa-trash-alt mr-1.5"></i> Delete All
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 dark:bg-gray-800/80 dark:text-gray-400 border-b border-slate-100 dark:border-dark-border">
+                <tr>
+                    <th scope="col" class="px-6 py-4 font-bold max-w-[200px] truncate">
+                        <a href="?sort={% if sort_by == 'item' %}-item{% else %}item{% endif %}" class="hover:text-indigo-600 flex items-center gap-1 group">
+                            Item Name <i class="fas fa-sort opacity-30 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </th>
+                    <th scope="col" class="px-6 py-4 font-bold">Quantity</th>
+                    <th scope="col" class="px-6 py-4 font-bold">
+                        <a href="?sort={% if sort_by == 'amount' %}-amount{% else %}amount{% endif %}" class="hover:text-indigo-600 flex items-center gap-1 group">
+                            Price/Unit <i class="fas fa-sort opacity-30 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </th>
+                    <th scope="col" class="px-6 py-4 font-bold">
+                        <a href="?sort={% if sort_by == 'total' %}-total{% else %}total{% endif %}" class="hover:text-indigo-600 flex items-center gap-1 group">
+                            Total Cost <i class="fas fa-sort opacity-30 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </th>
+                    <th scope="col" class="px-6 py-4 font-bold">
+                        <a href="?sort={% if sort_by == 'date' %}-date{% else %}date{% endif %}" class="hover:text-indigo-600 flex items-center gap-1 group">
+                            Date <i class="fas fa-sort opacity-30 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-right font-bold">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr class="bg-white odd:bg-white even:bg-slate-50/50 dark:bg-dark-surface hover:bg-indigo-50/30 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-slate-100 dark:border-dark-border last:border-0 group/row">
+                    <td class="px-6 py-4 font-semibold text-slate-800 dark:text-white">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-gray-800 flex items-center justify-center text-slate-500 dark:text-gray-400 text-xs flex-shrink-0 transition-transform group-hover/row:scale-110 group-hover/row:bg-indigo-100 group-hover/row:text-indigo-600">
+                                <i class="fas fa-receipt text-sm"></i>
+                            </div>
+                            <span class="truncate max-w-[200px] block" title="{{ expense.item }}">{{ expense.item }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600 dark:text-gray-400 font-medium">{{ expense.quantity }}</td>
+                    <td class="px-6 py-4 text-slate-600 dark:text-gray-400">₱{{ expense.amount|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 font-extrabold text-rose-600 dark:text-rose-400">₱{{ expense.total|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-gray-400">{{ expense.date|date:"M d, Y" }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{% url 'expense_update' expense.pk %}" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-primary-500/10 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-100 hover:shadow-sm" title="Edit">
+                                <i class="fas fa-edit text-sm"></i>
+                            </a>
+                            <a href="{% url 'expense_delete' expense.pk %}" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-white dark:hover:bg-red-500/10 rounded-xl transition-all duration-200 border border-transparent hover:border-rose-100 hover:shadow-sm" title="Delete">
+                                <i class="fas fa-trash text-sm"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-16 text-center text-gray-500 dark:text-gray-400">
+                        <div class="inline-flex w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center mb-4 border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-receipt text-2xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">No expenses logged yet</p>
+                        <p class="text-sm">Click 'Add Expense' to get started!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-dark-border bg-gray-50/50 dark:bg-gray-800/20">
+        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+            Page {{ expenses.number }} of {{ expenses.paginator.num_pages }}
+            &middot; {{ expenses.paginator.count }} total expense{{ expenses.paginator.count|pluralize }}
+        </p>
+        <div class="flex items-center gap-1">
+            {% if expenses.has_previous %}
+            <a href="?period={{ period }}&sort={{ sort_by }}&page={{ expenses.previous_page_number }}"
+               class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-100 text-sm">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            {% for num in expenses.paginator.page_range %}
+                {% if expenses.number == num %}
+                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-600 text-white text-xs font-bold shadow-sm shadow-indigo-500/30">{{ num }}</span>
+                {% elif num > expenses.number|add:"-3" and num < expenses.number|add:"3" %}
+                <a href="?period={{ period }}&sort={{ sort_by }}&page={{ num }}"
+                   class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-100 text-xs font-medium">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if expenses.has_next %}
+            <a href="?period={{ period }}&sort={{ sort_by }}&page={{ expenses.next_page_number }}"
+               class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-100 text-sm">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- AJAX MODALS -->
+
+<!-- Expense Modal -->
+<div id="expenseModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-white dark:bg-dark-surface rounded-2xl w-full max-w-lg shadow-2xl transform transition-transform scale-95 border border-gray-100 dark:border-dark-border">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-dark-border">
+            <h3 class="text-xl font-bold dark:text-white"><i class="fas fa-shopping-cart text-rose-500 mr-2"></i> Log New Expense</h3>
+            <button type="button" onclick="closeModal('expenseModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6 relative">
+            <div class="modal-loading-overlay absolute inset-0 bg-white/70 dark:bg-dark-surface/70 backdrop-blur-sm hidden z-10 flex items-center justify-center rounded-b-2xl">
+                <div class="skeleton" style="width:80%;height:200px;"></div>
+            </div>
+            <form action="{% url 'expense_create' %}" method="POST" class="ajax-form space-y-4">
+                {% csrf_token %}
+                {% for field in expense_form %}
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                {% endfor %}
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('expenseModal')" class="px-5 py-2 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-lg shadow-rose-500/30">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Funds Modal -->
+<div id="fundsModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-white dark:bg-dark-surface rounded-2xl w-full max-w-lg shadow-2xl transform transition-transform scale-95 border border-gray-100 dark:border-dark-border">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-dark-border">
+            <h3 class="text-xl font-bold dark:text-white"><i class="fas fa-piggy-bank text-indigo-500 mr-2"></i> Add Funds</h3>
+            <button type="button" onclick="closeModal('fundsModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6 relative">
+            <div class="modal-loading-overlay absolute inset-0 bg-white/70 dark:bg-dark-surface/70 backdrop-blur-sm hidden z-10 flex items-center justify-center rounded-b-2xl">
+                <div class="skeleton" style="width:80%;height:140px;"></div>
+            </div>
+            <form action="{% url 'income_create' %}" method="POST" class="ajax-form space-y-4">
+                {% csrf_token %}
+                {% for field in income_form %}
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                {% endfor %}
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('fundsModal')" class="px-5 py-2 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-500/30">Save Funds</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Savings Modal -->
+<div id="savingsModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-white dark:bg-dark-surface rounded-2xl w-full max-w-lg shadow-2xl transform transition-transform scale-95 border border-gray-100 dark:border-dark-border">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-dark-border">
+            <h3 class="text-xl font-bold dark:text-white"><i class="fas fa-leaf text-emerald-500 mr-2"></i> Log Savings</h3>
+            <button type="button" onclick="closeModal('savingsModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6 relative">
+            <div class="modal-loading-overlay absolute inset-0 bg-white/70 dark:bg-dark-surface/70 backdrop-blur-sm hidden z-10 flex items-center justify-center rounded-b-2xl">
+                <div class="skeleton" style="width:80%;height:200px;"></div>
+            </div>
+            <form action="{% url 'saving_create' %}" method="POST" class="ajax-form space-y-4">
+                {% csrf_token %}
+                {% for field in saving_form %}
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                {% endfor %}
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('savingsModal')" class="px-5 py-2 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-500/30">Save Savings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 1. Modal Toggles
+    window.openModal = (id) => {
+        const modal = document.getElementById(id);
+        modal.classList.remove('hidden');
+        // Give browser frame to apply display block before transitioning opacity
+        requestAnimationFrame(() => {
+            const inner = modal.querySelector('.transform');
+            if(inner) {
+                inner.classList.remove('scale-95');
+                inner.classList.add('scale-100');
+            }
+        });
+    };
+    
+    window.closeModal = (id) => {
+        const modal = document.getElementById(id);
+        const inner = modal.querySelector('.transform');
+        if(inner) {
+            inner.classList.add('scale-95');
+            inner.classList.remove('scale-100');
+        }
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    };
+
+    // 2. Toast Notification System
+    const showToast = (message, isError = false) => {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 z-[60] px-6 py-3.5 rounded-2xl shadow-2xl font-bold flex items-center text-white transition-all transform translate-y-full opacity-0 duration-300 ${isError ? 'bg-rose-500 shadow-rose-500/40' : 'bg-emerald-500 shadow-emerald-500/40'}`;
+        toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'} text-lg mr-3"></i> <span>${message}</span>`;
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-y-full', 'opacity-0');
+        });
+        
+        setTimeout(() => {
+            toast.classList.add('translate-y-full', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    };
+
+    // 3. Number Animations (Dynamic metrics)
+    const formatCurrency = (val) => {
+        return '₱' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    window.updateDashboardMetrics = (newData) => {
+        const mappings = {
+            'total_funds': newData.total_funds,
+            'total_expenses': newData.total_expenses,
+            'total_savings': newData.total_savings,
+            'remaining_balance': newData.remaining_balance
+        };
+        
+        for (const [key, value] of Object.entries(mappings)) {
+            const metricEl = document.querySelector(`.metric-number[data-key="${key}"]`);
+            if(metricEl) {
+                metricEl.setAttribute('data-value', value.toFixed(2));
+            }
+        }
+        
+        // Trigger animations
+        animateMetrics(true);
+    };
+
+    window.updateSavingsGoalsUI = (goalsArray) => {
+        const container = document.getElementById('savingsGoalsContainer');
+        if (!container) return;
+
+        goalsArray.forEach(goal => {
+            const goalEl = container.querySelector(`.goal-progress-item[data-pk="${goal.pk}"]`);
+            if (goalEl) {
+                const textSpan = goalEl.querySelector('.goal-text');
+                const barFill = goalEl.querySelector('.savings-bar-fill');
+                
+                if (barFill && textSpan) {
+                    let oldSaved = 0;
+                    const oldTextMatch = textSpan.innerText.match(/₱([\d,]+)/);
+                    if(oldTextMatch) {
+                        oldSaved = parseFloat(oldTextMatch[1].replace(/,/g, ''));
+                    }
+                    
+                    const targetSaved = goal.saved;
+                    const targetTotal = goal.target;
+                    const targetPercent = goal.percent;
+                    
+                    if (oldSaved === targetSaved) return;
+                    
+                    goalEl.classList.add('bg-emerald-50', 'dark:bg-emerald-900/20', 'transition-colors', 'duration-500');
+                    setTimeout(() => {
+                        goalEl.classList.remove('bg-emerald-50', 'dark:bg-emerald-900/20');
+                    }, 1000);
+                    
+                    barFill.style.width = `${targetPercent}%`;
+                    barFill.setAttribute('data-width', `${targetPercent}%`);
+                    
+                    if (targetPercent >= 100) {
+                        barFill.classList.remove('bg-indigo-500');
+                        barFill.classList.add('bg-emerald-500');
+                        
+                        const parentWrapper = barFill.parentElement;
+                        if (parentWrapper && !parentWrapper.querySelector('.fa-star')) {
+                            const star = document.createElement('i');
+                            star.className = 'fas fa-star text-amber-400 absolute -right-1 -top-1.5 text-xs drop-shadow-sm';
+                            parentWrapper.appendChild(star);
+                        }
+                    }
+                    
+                    const duration = 1200;
+                    const startTime = performance.now();
+                    const targetStrRight = ' / ₱' + targetTotal.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                    
+                    const animateValue = (currentTime) => {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        
+                        const currentVal = oldSaved + (targetSaved - oldSaved) * easeOut;
+                        const savedStr = '₱' + currentVal.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                        
+                        textSpan.innerText = savedStr + targetStrRight;
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animateValue);
+                        } else {
+                            textSpan.innerText = '₱' + targetSaved.toLocaleString('en-US', { maximumFractionDigits: 0 }) + targetStrRight;
+                        }
+                    };
+                    
+                    requestAnimationFrame(animateValue);
+                }
+            }
+        });
+    };
+
+    window.animateMetrics = (isAjax = false) => {
+        const metrics = document.querySelectorAll('.metric-number');
+        
+        metrics.forEach(metric => {
+            const key = metric.getAttribute('data-key');
+            const targetValue = parseFloat(metric.getAttribute('data-value')) || 0;
+            const card = metric.closest('a');
+            
+            const sessionKey = 'metric_v3_' + key;
+            const prevValueRaw = sessionStorage.getItem(sessionKey);
+            
+            let startValue = 0;
+            
+            // Compare and Highlight if updating via AJAX from an old value
+            if (isAjax && prevValueRaw !== null) {
+                const prev = parseFloat(prevValueRaw);
+                startValue = prev; // Count up/down natively starting from the old number
+                
+                if (prev !== targetValue) {
+                    const isIncrease = targetValue > prev;
+                    const flashClass = isIncrease 
+                        ? 'ring-4 ring-emerald-400 bg-emerald-50 dark:bg-emerald-900/30' 
+                        : 'ring-4 ring-rose-400 bg-rose-50 dark:bg-rose-900/30';
+                    
+                    const classesToAdd = flashClass.split(' ');
+                    classesToAdd.forEach(cls => card.classList.add(cls));
+                    
+                    setTimeout(() => {
+                        classesToAdd.forEach(cls => card.classList.remove(cls));
+                    }, 1000);
+                }
+            } else {
+                startValue = 0; // Always animate from 0 on page load
+            }
+            
+            sessionStorage.setItem(sessionKey, targetValue);
+            
+            if(startValue === targetValue && isAjax) {
+                metric.innerText = formatCurrency(targetValue);
+                return;
+            }
+            
+            const duration = 1200; 
+            const startTime = performance.now();
+            
+            card.style.transform = 'scale(1.03)';
+            card.style.transition = 'transform 0.3s ease-out, background-color 0.5s ease, box-shadow 0.5s ease';
+            
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const currentVal = startValue + (targetValue - startValue) * easeOut;
+                
+                metric.innerText = formatCurrency(currentVal);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    metric.innerText = formatCurrency(targetValue);
+                    setTimeout(() => { card.style.transform = ''; }, 150);
+                }
+            };
+            requestAnimationFrame(animate);
+        });
+
+        if (!isAjax) {
+            setTimeout(() => {
+                document.querySelectorAll('.savings-bar-fill').forEach(bar => {
+                    const targetWidth = bar.getAttribute('data-width');
+                    if (targetWidth) bar.style.width = targetWidth;
+                });
+            }, 150);
+        }
+    };
+    
+    // Initial run on mount — reveal real cards after animation
+    animateMetrics();
+    const skeletonCards = document.getElementById('skeleton-cards');
+    const metricCards   = document.getElementById('metric-cards');
+    if (skeletonCards && metricCards) {
+        setTimeout(() => {
+            skeletonCards.style.display = 'none';
+            metricCards.style.display   = '';
+        }, 120);
+    }
+
+
+    // 4. Form intercept logic via Fetch API
+    const ajaxForms = document.querySelectorAll('.ajax-form');
+    ajaxForms.forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            submitBtn.disabled = true;
+            // Show skeleton overlay
+            const overlay = form.closest('.relative')?.querySelector('.modal-loading-overlay');
+            if (overlay) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); }
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                // Assume 200/400 JSON standard
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(data.message);
+                    form.reset();
+                    const modal = form.closest('.fixed.inset-0');
+                    if(modal) closeModal(modal.id);
+                    
+                    // Update frontend numbers seamlessly
+                    if (data.updated_data) {
+                        updateDashboardMetrics(data.updated_data);
+                        if (data.updated_data.goal_progress) {
+                            updateSavingsGoalsUI(data.updated_data.goal_progress);
+                        }
+                    }
+                } else {
+                    showToast(data.message || 'Validation failed. Please check your data.', true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Network error while processing request.', true);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                // Hide skeleton overlay
+                if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

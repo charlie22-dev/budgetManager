@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased text-slate-900 bg-slate-50 dark:bg-gray-900 dark:text-gray-100" x-data="themeSetup()" x-init="initTheme()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TipidTracker</title>
+    
+    <!-- Modern Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% load static %}
+    <!-- Tailwind CSS & Alpine.js -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+                        dark: { bg: '#0f172a', surface: '#1e293b', border: '#334155' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <style type="text/tailwindcss">
+        @layer base {
+            input[type="text"], input[type="number"], input[type="email"], input[type="date"], input[type="password"], textarea, select {
+                @apply w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-900 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 block dark:bg-dark-bg dark:border-dark-border dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 transition-all duration-200;
+            }
+        }
+    </style>
+    
+    <style>
+        /* ─── CSS Custom Properties ─────────────────────────────── */
+        :root {
+            --surface:    #ffffff;
+            --surface-2:  #f8fafc;
+            --border:     #e2e8f0;
+            --text-muted: #64748b;
+            --radius:     1rem;
+            --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+            --shadow-md:  0 4px 16px rgba(0,0,0,.08);
+            --shadow-lg:  0 8px 32px rgba(0,0,0,.12);
+        }
+        .dark {
+            --surface:    #1e293b;
+            --surface-2:  #0f172a;
+            --border:     #334155;
+            --text-muted: #94a3b8;
+        }
+
+        /* ─── Glassmorphism ──────────────────────────────────────── */
+        .glass {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow: var(--shadow-md);
+        }
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 32px rgba(0,0,0,.3);
+        }
+
+        /* ─── Skeleton Loader ────────────────────────────────────── */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg,
+                #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 600px 100%;
+            animation: shimmer 1.4s ease-in-out infinite;
+            border-radius: 0.5rem;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg,
+                #334155 25%, #475569 50%, #334155 75%);
+            background-size: 600px 100%;
+            animation: shimmer 1.4s ease-in-out infinite;
+        }
+        .skeleton-card { height: 96px; border-radius: var(--radius); }
+        .skeleton-row  { height: 52px; margin-bottom: 2px; }
+        .skeleton-text { height: 14px; width: 60%; border-radius: 4px; }
+        .skeleton-text.w-40 { width: 40%; }
+        .skeleton-text.w-80 { width: 80%; }
+
+        /* ─── Table Row Entrance ─────────────────────────────────── */
+        @keyframes fadeInRow {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        tbody tr {
+            animation: fadeInRow 0.35s ease both;
+        }
+        tbody tr:nth-child(1)  { animation-delay: 0ms; }
+        tbody tr:nth-child(2)  { animation-delay: 40ms; }
+        tbody tr:nth-child(3)  { animation-delay: 80ms; }
+        tbody tr:nth-child(4)  { animation-delay: 120ms; }
+        tbody tr:nth-child(5)  { animation-delay: 160ms; }
+        tbody tr:nth-child(6)  { animation-delay: 200ms; }
+        tbody tr:nth-child(7)  { animation-delay: 240ms; }
+        tbody tr:nth-child(8)  { animation-delay: 280ms; }
+        tbody tr:nth-child(9)  { animation-delay: 320ms; }
+        tbody tr:nth-child(10) { animation-delay: 360ms; }
+
+        /* ─── Custom Scrollbar ───────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        [x-cloak] { display: none !important; }
+
+        /* ─── Theme Switch ───────────────────────────────────────── */
+        .theme-switch { display: inline-block; height: 24px; position: relative; width: 44px; flex-shrink: 0; }
+        .theme-switch input { display: none; }
+        .slider { background-color: #CBD5E1; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .3s; }
+        .slider:before { background-color: #fff; bottom: 3px; content: ""; height: 18px; left: 3px; position: absolute; transition: .3s; width: 18px; }
+        input:checked + .slider { background-color: #4f46e5; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .slider.round { border-radius: 24px; }
+        .slider.round:before { border-radius: 50%; }
+        .dark .slider { background-color: #334155; }
+
+        /* ─── Page Animations ────────────────────────────────────── */
+        @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp  { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .anim-fade-in  { animation: fadeIn  0.5s ease-out forwards; }
+        .anim-slide-up { animation: slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* ─── Premium Auth ───────────────────────────────────────── */
+        .auth-gradient {
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .glass-premium {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        .glow-indigo { box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.3); }
+        .glow-violet { box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.3); }
+        .input-dark {
+            background: rgba(15, 23, 42, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+        .input-dark:focus {
+            border-color: rgba(99, 102, 241, 0.5) !important;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* ─── Form Card ──────────────────────────────────────────── */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .form-card .form-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        /* Input focus glow */
+        input:focus, select:focus, textarea:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+        }
+        /* Validation error styling */
+        .errorlist { list-style: none; padding: 0; margin: 4px 0 0; }
+        .errorlist li {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #e11d48;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .errorlist li::before { content: '\26A0\FE0F'; }
+    </style>
+    
+    <!-- PWA Configuration -->
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}">
+</head>
+<body class="flex h-screen overflow-hidden transition-colors duration-200" x-data="{ sidebarOpen: false }">
+
+    {% if user.is_authenticated %}
+    <!-- Mobile sidebar overlay -->
+    <div x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-20 bg-gray-900/50 backdrop-blur-sm lg:hidden" @click="sidebarOpen = false" x-cloak></div>
+
+    <!-- Sidebar with Hover Expansion (group) -->
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-30 flex flex-col w-64 lg:w-[88px] hover:lg:w-[280px] group overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out transform bg-white border-r border-gray-200 lg:translate-x-0 lg:static lg:inset-0 dark:bg-dark-surface dark:border-dark-border shadow-xl hover:shadow-2xl lg:shadow-none hover:lg:shadow-[5px_0_25px_rgba(0,0,0,0.05)] dark:hover:lg:shadow-[5px_0_25px_rgba(0,0,0,0.3)]">
+        <!-- Sidebar Header -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-dark-border lg:px-[24px]">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-10 h-10 flex-shrink-0 text-white rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-primary-500/30 shadow-lg">
+                    <i class="fas fa-wallet text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">TipidTracker</h1>
+            </div>
+            <button @click="sidebarOpen = false" class="text-gray-500 lg:hidden hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto lg:px-[20px] lg:group-hover:px-4 transition-all duration-300">
+            {% url 'dashboard' as url_dashboard %}
+            <a href="{{ url_dashboard }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_dashboard or request.resolver_match.url_name == 'dashboard' %}bg-indigo-50 text-indigo-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
+                <i class="fas fa-home w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_dashboard or request.resolver_match.url_name == 'dashboard' %}text-indigo-600{% else %}text-slate-400{% endif %}"></i>
+                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Dashboard</span>
+            </a>
+            
+            {% url 'monitoring' as url_monitoring %}
+            <a href="{{ url_monitoring }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_monitoring or request.resolver_match.url_name == 'monitoring' %}bg-purple-50 text-purple-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
+                <i class="fas fa-chart-pie w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_monitoring or request.resolver_match.url_name == 'monitoring' %}text-purple-600{% else %}text-slate-400{% endif %}"></i>
+                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Monitoring</span>
+            </a>
+            
+            {% url 'savings_list' as url_savings %}
+            <a href="{{ url_savings }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_savings or request.resolver_match.url_name == 'savings_list' %}bg-emerald-50 text-emerald-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
+                <i class="fas fa-piggy-bank w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_savings or request.resolver_match.url_name == 'savings_list' %}text-emerald-600{% else %}text-slate-400{% endif %}"></i>
+                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Savings</span>
+            </a>
+            
+            {% url 'about' as url_about %}
+            <a href="{{ url_about }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_about or request.resolver_match.url_name == 'about' %}bg-amber-50 text-amber-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
+                <i class="fas fa-info-circle w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_about or request.resolver_match.url_name == 'about' %}text-amber-600{% else %}text-slate-400{% endif %}"></i>
+                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">About</span>
+            </a>
+            
+            {% url 'contact' as url_contact %}
+            <a href="{{ url_contact }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_contact or request.resolver_match.url_name == 'contact' %}bg-rose-50 text-rose-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
+                <i class="fas fa-envelope flex-shrink-0 w-6 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_contact or request.resolver_match.url_name == 'contact' %}text-rose-600{% else %}text-slate-400{% endif %}"></i>
+                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Contact Us</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-gray-100 dark:border-dark-border lg:px-[20px] lg:group-hover:px-4 transition-all duration-300">
+            <!-- Theme Toggle Switch -->
+            <div class="flex items-center justify-between px-3 py-3 rounded-xl text-gray-600 dark:text-gray-400">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-moon flex-shrink-0 w-6 text-center text-lg hidden dark:block text-yellow-400"></i>
+                    <i class="fas fa-sun flex-shrink-0 w-6 text-center text-lg block dark:hidden text-gray-500"></i>
+                    <span class="font-medium lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300 text-sm">Dark Mode</span>
+                </div>
+                <label class="theme-switch lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">
+                    <input type="checkbox" x-model="isDark" @change="toggleThemeCheckbox()" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+            
+            <form method="post" action="{% url 'account_logout' %}" class="mt-1">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center w-full px-3 py-3 text-red-600 rounded-xl hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 text-left">
+                    <i class="fas fa-sign-out-alt w-6 flex-shrink-0 text-center text-lg"></i>
+                    <span class="ml-3 font-medium lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Logout</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="flex flex-col flex-1 w-full overflow-hidden bg-gray-50 dark:bg-dark-bg">
+        
+        {% if user.is_authenticated %}
+        <!-- Mobile Header -->
+        <header class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 lg:hidden dark:bg-dark-surface dark:border-dark-border shadow-sm z-10">
+            <button @click="sidebarOpen = true" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 focus:outline-none">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-8 h-8 text-white rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 shadow-primary-500/30 shadow-md">
+                    <i class="fas fa-wallet text-sm"></i>
+                </div>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">TipidTracker</h2>
+            </div>
+        </header>
+        {% endif %}
+
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto relative w-full {% if not user.is_authenticated %}flex items-center justify-center{% endif %}">
+            <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+                
+                <!-- Messages -->
+                {% if messages %}
+                <div class="mb-8 space-y-4">
+                    {% for message in messages %}
+                    <div x-data="{ show: true }" x-show="show" x-transition.duration.300ms class="flex items-center justify-between p-4 rounded-xl shadow-sm border {% if message.tags == 'success' %}bg-green-50 text-green-800 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20{% else %}bg-red-50 text-red-800 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20{% endif %}">
+                        <div class="flex items-center gap-3">
+                            {% if message.tags == 'success' %}
+                                <i class="fas fa-check-circle text-xl text-green-500"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle text-xl text-red-500"></i>
+                            {% endif %}
+                            <p class="font-medium">{{ message }}</p>
+                        </div>
+                        <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none dark:hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Page Content -->
+                <div class="animate-fade-in-up">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- PWA Installation Logic -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register("/serviceworker.js").catch(function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+    
+    <!-- Alpine.js global store for theme -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('themeSetup', () => ({
+                isDark: false,
+                initTheme() {
+                    const theme = localStorage.getItem('theme');
+                    if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        this.isDark = true;
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        this.isDark = false;
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+                toggleThemeCheckbox() {
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                    }
+                }
+            }));
+        });
+    </script>
+
+    <!-- Global Styles for Animations -->
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+    </style>
+    <!-- Global Amount Comma Formatter -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        function formatWithCommas(value) {
+            // Remove all non-digit and non-dot chars
+            let raw = value.replace(/[^0-9.]/g, '');
+            // Split into integer and decimal
+            let parts = raw.split('.');
+            // Format integer part with commas
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            // Rejoin with at most one decimal point
+            return parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+        }
+
+        function setupAmountInput(input) {
+            // Only target number inputs or inputs with name containing 'amount'
+            // Skip quantity, date, and other non-currency fields
+            const name = input.name.toLowerCase();
+            const isCurrencyField = input.type === 'number' && !name.includes('quantity') && !name.includes('date') && !name.includes('year') && !name.includes('month') && !name.includes('day');
+            const isAmountNamed = name.includes('amount');
+            if (!isCurrencyField && !isAmountNamed) return;
+
+            // Create a hidden input to submit the real numeric value
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = input.name;
+            input.name = input.name + '_display';
+            input.type = 'text';
+            input.inputMode = 'decimal';
+            hidden.value = input.value;
+            input.value = input.value ? formatWithCommas(input.value) : '';
+            input.parentNode.insertBefore(hidden, input.nextSibling);
+
+            // Wrap input with ₱ prefix
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:relative;display:block;';
+            const prefix = document.createElement('span');
+            prefix.textContent = '₱';
+            prefix.style.cssText = 'position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:600;font-size:0.95rem;color:#64748b;pointer-events:none;z-index:10;';
+            input.style.paddingLeft = '32px';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(prefix);
+            wrapper.appendChild(input);
+
+            input.addEventListener('input', function () {
+                const cursorPos = input.selectionStart;
+                const oldLen = input.value.length;
+                let formatted = formatWithCommas(input.value);
+                input.value = formatted;
+                const newLen = input.value.length;
+                input.setSelectionRange(cursorPos + (newLen - oldLen), cursorPos + (newLen - oldLen));
+                hidden.value = formatted.replace(/,/g, '');
+            });
+        }
+
+        // Apply to all number inputs and amount-named fields on page load
+        document.querySelectorAll('input[type="number"], input[name*="amount"]').forEach(setupAmountInput);
+
+        // Also watch for dynamically injected inputs (future-proof)
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+                m.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) {
+                        node.querySelectorAll && node.querySelectorAll('input[type="number"], input[name*="amount"]').forEach(setupAmountInput);
+                    }
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+    </script>
+</body>
+</html>

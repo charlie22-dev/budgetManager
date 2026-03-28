@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+    <div>
+        <h2 class="text-3xl font-black text-slate-900 dark:text-white">Savings Monitoring</h2>
+        <p class="text-slate-500 dark:text-gray-400 mt-1 max-w-md">Track your financial growth and saving consistency over time.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+        <a href="{% url 'savings_list' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Savings
+        </a>
+        <a href="{% url 'monitoring' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all shadow-sm active:scale-95">
+            <i class="fas fa-chart-line mr-2"></i> Expense Monitoring
+        </a>
+        <button onclick="window.print()" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm hidden sm:inline-flex active:scale-95">
+            <i class="fas fa-print mr-2"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<div class="bg-white dark:bg-dark-surface rounded-3xl shadow-sm border border-slate-100 dark:border-dark-border p-6 sm:p-10 transition-all hover:shadow-xl hover:shadow-slate-200/50 mb-8">
+    <div class="flex items-center gap-4 mb-8 pb-8 border-b border-slate-50 dark:border-dark-border">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 dark:bg-green-500/10 dark:text-green-400 flex-shrink-0 shadow-sm">
+            <i class="fas fa-piggy-bank text-xl"></i>
+        </div>
+        <div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white">Daily Savings Trends</h3>
+            <p class="text-sm font-medium text-slate-400 dark:text-gray-400 mt-1">Monitor your progression towards your financial goals.</p>
+        </div>
+    </div>
+    
+    {% if totals %}
+    <div class="relative w-full h-[400px]">
+        <canvas id="savingsChart"></canvas>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-500 dark:text-gray-400">
+        <div class="inline-flex w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center mb-4 border border-gray-200 dark:border-gray-700">
+            <i class="fas fa-piggy-bank text-2xl text-gray-400 dark:text-gray-500"></i>
+        </div>
+        <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">No savings data yet</p>
+        <p class="text-sm">Start saving to see your trends here!</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('savingsChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const dates = {{ dates|safe }};
+        const totals = {{ totals|safe }};
+        
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.04)';
+        const tooltipBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+        const tooltipText = isDark ? '#f8fafc' : '#0f172a';
+        const tooltipBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+        
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = textColor;
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Total Saved (₱)',
+                    data: totals,
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(52, 211, 153, 0.85)',
+                        'rgba(110, 231, 183, 0.85)',
+                        'rgba(6, 182, 212, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(99, 102, 241, 0.85)',
+                        'rgba(168, 85, 247, 0.85)',
+                    ],
+                    borderColor: 'transparent',
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: tooltipBg,
+                        titleColor: tooltipText,
+                        bodyColor: tooltipText,
+                        borderColor: tooltipBorder,
+                        borderWidth: 1,
+                        padding: 12,
+                        titleFont: { size: 13, weight: '600', family: "'Inter', sans-serif" },
+                        bodyFont: { size: 14, weight: '500', family: "'Inter', sans-serif" },
+                        displayColors: false,
+                        cornerRadius: 8,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor, drawBorder: false },
+                        border: { display: false },
+                        ticks: {
+                            callback: function(value) { return '₱' + value; }
+                        }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        border: { display: false }
+                    }
+                },
+                animation: {
+                    y: { duration: 1200, easing: 'easeOutQuart' }
+                }
+            }
+        });
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const isDarkNow = document.documentElement.classList.contains('dark');
+                    const newChart = Chart.getChart(ctx);
+                    if (newChart) {
+                        newChart.options.plugins.tooltip.backgroundColor = isDarkNow ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+                        newChart.options.plugins.tooltip.titleColor = isDarkNow ? '#f8fafc' : '#0f172a';
+                        newChart.options.plugins.tooltip.bodyColor = isDarkNow ? '#f8fafc' : '#0f172a';
+                        newChart.options.scales.y.grid.color = isDarkNow ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.04)';
+                        newChart.update();
+                    }
+                }
+            });
+        });
+        observer.observe(document.documentElement, { attributes: true });
+    });
+</script>
+{% endblock %}

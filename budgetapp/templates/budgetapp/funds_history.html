@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+    <div>
+        <h2 class="text-3xl font-black text-slate-900 dark:text-white">Funds History</h2>
+        <p class="text-slate-500 dark:text-gray-400 mt-1 max-w-md">Comprehensive log of all financial injections into your tracking system.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+        <a href="{% url 'dashboard' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+        </a>
+        <a href="{% url 'income_create' %}" class="inline-flex items-center px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg shadow-emerald-500/25 active:scale-95">
+            <i class="fas fa-plus mr-2"></i> Add Funds
+        </a>
+    </div>
+</div>
+
+<!-- Summary Card -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div class="bg-gradient-to-br from-white to-blue-50/30 dark:from-dark-surface dark:to-dark-surface rounded-3xl p-6 shadow-sm border border-blue-100/50 dark:border-dark-border flex items-center gap-5 transition-all hover:-translate-y-1.5 hover:shadow-xl hover:shadow-blue-500/10 duration-300 group">
+        <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform">
+            <i class="fas fa-piggy-bank text-2xl"></i>
+        </div>
+        <div>
+            <p class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-gray-400">Total Funds Added</p>
+            <h3 class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">₱{{ total_funds|floatformat:2|intcomma }}</h3>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-white to-slate-50/30 dark:from-dark-surface dark:to-dark-surface rounded-3xl p-6 shadow-sm border border-slate-200/50 dark:border-dark-border flex items-center gap-5 transition-all hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-500/10 duration-300 group">
+        <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-100 text-slate-600 dark:bg-gray-800/50 dark:text-gray-400 shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-transform">
+            <i class="fas fa-list-ul text-2xl"></i>
+        </div>
+        <div>
+            <p class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-gray-400">Total Entries</p>
+            <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">{{ incomes|length }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="bg-white dark:bg-dark-surface rounded-3xl shadow-sm border border-slate-100 dark:border-dark-border p-6 sm:p-10 transition-all hover:shadow-xl hover:shadow-slate-200/50 mb-10">
+    <div class="flex items-center gap-4 mb-8 pb-8 border-b border-slate-50 dark:border-dark-border">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 dark:bg-primary-500/10 dark:text-primary-400 flex-shrink-0 shadow-sm">
+            <i class="fas fa-chart-bar text-xl"></i>
+        </div>
+        <div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white">Funds Monitoring</h3>
+            <p class="text-sm font-medium text-slate-400 dark:text-gray-400 mt-1">Daily breakdown of added financial resources.</p>
+        </div>
+    </div>
+    {% if totals %}
+    <div class="relative w-full h-[350px]">
+        <canvas id="fundsChart"></canvas>
+    </div>
+    {% else %}
+    <div class="text-center py-20 text-slate-400 dark:text-gray-500 bg-slate-50/50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-dark-border">
+        <div class="w-20 h-20 rounded-full bg-slate-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-chart-bar text-3xl opacity-50"></i>
+        </div>
+        <p class="text-base font-bold text-slate-900 dark:text-white mb-1">No data visualization available</p>
+        <p class="text-sm">Add some funds to begin tracking your financial trends!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- History Table -->
+<div class="bg-white dark:bg-dark-surface rounded-3xl shadow-sm border border-slate-100 dark:border-dark-border overflow-hidden">
+    <div class="px-6 py-5 border-b border-slate-50 dark:border-dark-border flex justify-between items-center bg-slate-50/30 dark:bg-gray-800/20">
+        <h3 class="text-lg font-black text-slate-900 dark:text-white">All Fund Entries</h3>
+    </div>
+    <!-- Mobile scroll hint -->
+    <p class="text-xs text-slate-400 text-right px-4 pt-3 pb-1 sm:hidden"><i class="fas fa-arrows-left-right mr-1"></i> Scroll to see all columns</p>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-slate-500 dark:text-gray-400 min-w-[480px]">
+            <thead class="text-xs text-slate-400 uppercase bg-slate-50/50 dark:bg-gray-800/80 dark:text-gray-400 border-b border-slate-50 dark:border-dark-border">
+                <tr>
+                    <th scope="col" class="px-6 py-4 font-bold">Source / Description</th>
+                    <th scope="col" class="px-6 py-4 font-bold text-center">Date</th>
+                    <th scope="col" class="px-6 py-4 font-bold text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="funds-tbody">
+                <!-- Skeleton rows -->
+                {% if incomes %}
+                {% for i in '12345' %}
+                <tr class="skeleton-table-row border-b border-slate-50 dark:border-dark-border">
+                    <td class="px-6 py-4" colspan="3"><div class="skeleton skeleton-row w-full"></div></td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                {% for income in incomes %}
+                <tr class="bg-white odd:bg-white even:bg-slate-50/50 dark:bg-dark-surface hover:bg-blue-50/30 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-slate-50 dark:border-dark-border last:border-0 group/row">
+                    <td class="px-6 py-4 font-bold text-slate-800 dark:text-white">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 flex items-center justify-center text-xs flex-shrink-0 transition-transform group-hover/row:scale-110 shadow-sm border border-blue-100/50">
+                                <i class="fas fa-coins text-sm"></i>
+                            </div>
+                            <span>{{ income.source }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center text-slate-500 dark:text-gray-400 font-medium">{{ income.date|date:"M d, Y" }}</td>
+                    <td class="px-6 py-4 font-black text-blue-600 dark:text-blue-400 text-right">₱{{ income.amount|floatformat:2|intcomma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="px-6 py-16 text-center text-gray-500 dark:text-gray-400">
+                        <div class="inline-flex w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center mb-4 border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-piggy-bank text-2xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">No funds added yet</p>
+                        <p class="text-sm">Click 'Add Funds' to get started!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove skeleton rows
+    document.querySelectorAll('.skeleton-table-row').forEach(r => r.remove());
+
+    const canvas = document.getElementById('fundsChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const dates = {{ dates|safe }};
+    const totals = {{ totals|safe }};
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.04)';
+    const tooltipBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+    const tooltipText = isDark ? '#f8fafc' : '#0f172a';
+    const tooltipBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = textColor;
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Funds Added (₱)',
+                data: totals,
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.85)',
+                    'rgba(99, 102, 241, 0.85)',
+                    'rgba(16, 185, 129, 0.85)',
+                    'rgba(245, 158, 11, 0.85)',
+                    'rgba(239, 68, 68, 0.85)',
+                    'rgba(168, 85, 247, 0.85)',
+                    'rgba(6, 182, 212, 0.85)',
+                ],
+                borderColor: 'transparent',
+                borderWidth: 0,
+                borderRadius: 6,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipText,
+                    bodyColor: tooltipText,
+                    borderColor: tooltipBorder,
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) { return '₱' + context.parsed.y.toLocaleString(); }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: gridColor, drawBorder: false },
+                    border: { display: false },
+                    ticks: { callback: function(v) { return '₱' + v; } }
+                },
+                x: { grid: { display: false, drawBorder: false }, border: { display: false } }
+            },
+            animation: { y: { duration: 1200, easing: 'easeOutQuart' } }
+        }
+    });
+});
+</script>
+{% endblock %}

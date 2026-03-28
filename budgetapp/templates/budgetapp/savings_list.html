@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+    <div>
+        <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-bold text-slate-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors mb-2 group">
+            <i class="fas fa-arrow-left mr-1.5 transform group-hover:-translate-x-1 transition-transform"></i> Back to Dashboard
+        </a>
+        <h2 class="text-3xl font-black text-slate-900 dark:text-white">Savings Goals</h2>
+        <p class="text-slate-500 dark:text-gray-400 mt-1 max-w-md">Track and manage your strategic financial growth over time.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+        <a href="{% url 'savings_monitoring' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all shadow-sm active:scale-95">
+            <i class="fas fa-chart-bar mr-2"></i> View Monitoring
+        </a>
+        <a href="{% url 'saving_create' %}" class="inline-flex items-center px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg shadow-emerald-500/25 active:scale-95">
+            <i class="fas fa-plus mr-2"></i> Add Savings
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-10">
+    <!-- Total Savings Card -->
+    <div class="bg-gradient-to-br from-white to-emerald-50/30 dark:from-dark-surface dark:to-dark-surface rounded-3xl p-6 shadow-sm border border-emerald-100/50 dark:border-dark-border flex items-center gap-5 transition-all hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-500/10 duration-300 group">
+        <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-green-500/10 dark:text-green-400 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform">
+            <i class="fas fa-piggy-bank text-2xl"></i>
+        </div>
+        <div>
+            <p class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-gray-400">Total Accumulated Savings</p>
+            <h3 class="text-2xl font-black text-emerald-600 dark:text-green-400 mt-1">₱{{ total_savings|floatformat:2|intcomma }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Expanded Savings Goals View -->
+<div class="mb-10">
+    <div class="flex items-center justify-between mb-5">
+        <h3 class="text-xl font-black text-slate-900 dark:text-white"><i class="fas fa-bullseye text-indigo-500 mr-2"></i> All Savings Goals</h3>
+        <a href="{% url 'savings_goal_create' %}" class="inline-flex items-center px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-sm">
+            <i class="fas fa-plus mr-1.5"></i> Add Goal
+        </a>
+    </div>
+
+    <!-- Goals Grid -->
+    {% if goal_progress %}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for gp in goal_progress %}
+        <div class="bg-white dark:bg-dark-surface rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-dark-border hover:border-indigo-200 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group relative overflow-hidden">
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <div>
+                    <h4 class="font-bold text-slate-800 dark:text-white text-lg">{{ gp.name }}</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">{% if gp.deadline %}Due: {{ gp.deadline|date:"M d, Y" }}{% else %}No deadline set{% endif %}</p>
+                </div>
+                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a href="{% url 'savings_goal_update' gp.pk %}" class="w-8 h-8 rounded-full bg-slate-50 dark:bg-gray-800 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 transition-colors"><i class="fas fa-edit text-xs"></i></a>
+                    <a href="{% url 'savings_goal_delete' gp.pk %}" class="w-8 h-8 rounded-full bg-slate-50 dark:bg-gray-800 flex items-center justify-center text-rose-600 hover:bg-rose-50 dark:hover:bg-red-500/20 transition-colors"><i class="fas fa-trash text-xs"></i></a>
+                </div>
+            </div>
+            
+            <div class="relative z-10">
+                <div class="flex justify-between text-sm font-medium mb-2">
+                    <span class="text-slate-600 dark:text-gray-300">₱{{ gp.saved|floatformat:0|intcomma }}</span>
+                    <span class="text-slate-400">₱{{ gp.target|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-gray-700 rounded-full h-3">
+                    <div class="h-3 rounded-full transition-all duration-1000 ease-out list-savings-bar {% if gp.status == 'completed' %}bg-emerald-500{% else %}bg-indigo-500{% endif %}" style="width: 0%" data-width="{{ gp.percent }}%"></div>
+                </div>
+                <p class="text-xs font-bold text-right mt-2 {% if gp.status == 'completed' %}text-emerald-500{% else %}text-indigo-500{% endif %}">{{ gp.percent|floatformat:0 }}%</p>
+            </div>
+            {% if gp.status == 'completed' %}
+            <div class="absolute -right-6 -top-6 text-emerald-500/10">
+                <i class="fas fa-star text-9xl"></i>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white dark:bg-dark-surface rounded-2xl p-10 text-center border border-dashed border-slate-200 dark:border-dark-border">
+        <div class="w-16 h-16 mx-auto bg-slate-50 dark:bg-gray-800 rounded-full flex items-center justify-center text-slate-300 dark:text-gray-600 mb-4 cursor-default">
+            <i class="fas fa-bullseye text-2xl"></i>
+        </div>
+        <p class="text-slate-500 font-medium">No savings goals set up yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Table Container -->
+<div class="bg-white dark:bg-dark-surface rounded-3xl shadow-sm border border-slate-100 dark:border-dark-border overflow-hidden">
+    <div class="px-6 py-5 border-b border-slate-50 dark:border-dark-border flex justify-between items-center bg-slate-50/30 dark:bg-gray-800/20">
+        <h3 class="text-lg font-black text-slate-900 dark:text-white">Your Savings Journey</h3>
+        {% if savings %}
+        <a href="{% url 'saving_delete_all' %}" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-100 transition-all shadow-sm active:scale-95">
+            <i class="fas fa-trash-alt mr-1.5"></i> Delete All
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Mobile scroll hint -->
+    <p class="text-xs text-slate-400 text-right px-4 pt-3 pb-1 sm:hidden"><i class="fas fa-arrows-left-right mr-1"></i> Scroll to see all columns</p>
+    <div class="overflow-x-auto" style="--scroll-shadow: inset -8px 0 12px -8px rgba(0,0,0,.06);">
+        <table class="w-full text-sm text-left text-slate-500 dark:text-gray-400 min-w-[540px]">
+            <thead class="text-xs text-slate-400 uppercase bg-slate-50/50 dark:bg-gray-800/80 dark:text-gray-400 border-b border-slate-50 dark:border-dark-border">
+                <tr>
+                    <th scope="col" class="px-6 py-4 font-bold">Purpose</th>
+                    <th scope="col" class="px-6 py-4 font-bold">Source</th>
+                    <th scope="col" class="px-6 py-4 font-bold text-center">Date Saved</th>
+                    <th scope="col" class="px-6 py-4 font-bold text-right">Amount</th>
+                    <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="savings-tbody">
+                <!-- Skeleton rows -->
+                {% if savings %}
+                {% for i in '12345' %}
+                <tr class="skeleton-table-row border-b border-slate-50 dark:border-dark-border">
+                    <td class="px-6 py-4" colspan="5"><div class="skeleton skeleton-row w-full"></div></td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                {% for saving in savings %}
+                <tr class="bg-white odd:bg-white even:bg-slate-50/50 dark:bg-dark-surface hover:bg-emerald-50/30 dark:hover:bg-gray-800/50 transition-all duration-200 border-b border-slate-50 dark:border-dark-border last:border-0 group/row">
+                    <td class="px-6 py-4 font-bold text-slate-800 dark:text-white">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-green-500/10 dark:text-green-400 flex items-center justify-center text-xs flex-shrink-0 transition-transform group-hover/row:scale-110 shadow-sm border border-emerald-100/50">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <span>{{ saving.purpose }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if saving.source == 'funds' %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-100/50">
+                            <i class="fas fa-piggy-bank text-[10px]"></i> Funds
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400 border border-purple-100/50">
+                            <i class="fas fa-wallet text-[10px]"></i> Balance
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center text-slate-500 dark:text-gray-400 font-medium">{{ saving.date|date:"M d, Y" }}</td>
+                    <td class="px-6 py-4 font-black text-emerald-600 dark:text-emerald-400 text-right">₱{{ saving.amount|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{% url 'saving_delete' saving.pk %}" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-rose-100 hover:shadow-sm" title="Delete">
+                                <i class="fas fa-trash text-sm"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-16 text-center text-gray-500 dark:text-gray-400">
+                        <div class="inline-flex w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center mb-4 border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-box-open text-2xl text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">No savings recorded yet</p>
+                        <p class="text-sm">Start saving for your future goals today!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Remove skeleton rows immediately
+        document.querySelectorAll('.skeleton-table-row').forEach(r => r.remove());
+
+        // Animate savings goal bars
+        setTimeout(() => {
+            document.querySelectorAll('.list-savings-bar').forEach(bar => {
+                const target = bar.getAttribute('data-width');
+                if (target) bar.style.width = target;
+            });
+        }, 150);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{
+  "name": "TipidTracker",
+  "short_name": "Tipid",
+  "description": "Manage your daily expenses, monitor your budget, and track savings with TipidTracker.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/static/images/favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}
