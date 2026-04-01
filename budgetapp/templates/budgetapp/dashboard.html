@@ -680,6 +680,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Seamless AJAX Pagination & Sorting for Expenses Table
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('#expenses-table a');
+        
+        // Target only links inside the table that do pagination/sorting (start with '?')
+        if (link && link.getAttribute('href') && link.getAttribute('href').startsWith('?')) {
+            e.preventDefault();
+            const url = link.href;
+            const tableWrap = document.getElementById('expenses-table');
+            
+            // Add a smooth loading state
+            tableWrap.style.transition = 'opacity 0.2s ease';
+            tableWrap.style.opacity = '0.4';
+            
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const newTableHtml = doc.getElementById('expenses-table').innerHTML;
+                    
+                    tableWrap.innerHTML = newTableHtml;
+                    tableWrap.style.opacity = '1';
+                    
+                    // Update URL bar without reload, so refresh still works
+                    window.history.pushState({path: url}, '', url);
+                })
+                .catch(() => {
+                    // Fallback to normal navigation if fetch fails
+                    window.location.href = url;
+                });
+        }
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if(e.state && e.state.path) {
+            window.location.href = e.state.path;
+        }
+    });
+
 });
 </script>
 {% endblock %}

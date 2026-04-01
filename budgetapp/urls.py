@@ -28,4 +28,9 @@ urlpatterns = [
     path('savings_goal/delete/<int:pk>/', views.savings_goal_delete, name='savings_goal_delete'),
 
     path('export/report/', views.export_report, name='export_report'),
+
+    # OTP-based password reset flow
+    path('password-reset/', views.password_reset_request, name='password_reset_request'),
+    path('password-reset/verify/', views.password_reset_verify, name='password_reset_verify'),
+    path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
 ]

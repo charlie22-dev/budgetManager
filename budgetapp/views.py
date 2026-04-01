@@ -1,15 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth import password_validation
 from django.contrib import messages
 from django.db.models import Sum
 from django.core.paginator import Paginator
-from .models import Expense, Income, Saving, BalanceTransfer, SavingsGoal
+from django.core.mail import send_mail
+from .models import Expense, Income, Saving, BalanceTransfer, SavingsGoal, PasswordResetOTP
 from .forms import ExpenseForm, IncomeForm, SavingForm, BalanceTransferForm, SavingsGoalForm
 import csv
 import io
+import random
 from django.http import HttpResponse, JsonResponse
 from datetime import timedelta
 from django.utils import timezone
+from django.conf import settings
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -637,3 +642,104 @@ def export_report(request):
             writer.writerow(row)
 
         return response
+
+
+# ---------------------------------------------------------------------------
+# OTP-Based Password Reset (3-step flow)
+# ---------------------------------------------------------------------------
+
+def password_reset_request(request):
+    """Step 1: User enters their email. OTP is generated and sent."""
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # Don't leak whether the email exists. Show fake success.
+            request.session['otp_email'] = email
+            return redirect('password_reset_verify')
+
+        # Invalidate any old OTPs for this user
+        PasswordResetOTP.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        # Generate a fresh 6-digit OTP
+        otp_code = f"{random.randint(100000, 999999)}"
+        PasswordResetOTP.objects.create(user=user, otp=otp_code)
+
+        # Send the OTP email
+        send_mail(
+            subject='Your TipidTracker Password Reset Code',
+            message=(
+                f"Hello {user.username},\n\n"
+                f"Your password reset code is:\n\n"
+                f"  {otp_code}\n\n"
+                f"This code is valid for 10 minutes. Do not share it with anyone.\n\n"
+                f"If you did not request this, you can safely ignore this email.\n\n"
+                f"— TipidTracker Team"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        request.session['otp_email'] = email
+        return redirect('password_reset_verify')
+
+    return render(request, 'budgetapp/password_reset_request.html')
+
+
+def password_reset_verify(request):
+    """Step 2: User enters the 6-digit OTP they received."""
+    email = request.session.get('otp_email')
+    if not email:
+        return redirect('password_reset_request')
+
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp', '').strip()
+        try:
+            user = User.objects.get(email__iexact=email)
+            otp_obj = PasswordResetOTP.objects.filter(
+                user=user, otp=entered_otp, is_used=False
+            ).latest('created_at')
+
+            if otp_obj.is_valid():
+                # Mark OTP as used and store user ID for Step 3
+                otp_obj.is_used = True
+                otp_obj.save()
+                request.session['reset_user_id'] = user.pk
+                # Clean up to prevent re-use
+                del request.session['otp_email']
+                return redirect('password_reset_confirm')
+            else:
+                messages.error(request, 'This OTP has expired. Please request a new one.')
+        except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
+            messages.error(request, 'Invalid OTP. Please check and try again.')
+
+    return render(request, 'budgetapp/password_reset_verify.html', {'email': email})
+
+
+def password_reset_confirm(request):
+    """Step 3: User sets a new password after OTP verification."""
+    user_id = request.session.get('reset_user_id')
+    if not user_id:
+        return redirect('password_reset_request')
+
+    user = get_object_or_404(User, pk=user_id)
+
+    if request.method == 'POST':
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+
+        if password1 != password2:
+            messages.error(request, 'Passwords do not match.')
+        elif len(password1) < 8:
+            messages.error(request, 'Password must be at least 8 characters long.')
+        else:
+            user.set_password(password1)
+            user.save()
+            # Clear session
+            del request.session['reset_user_id']
+            messages.success(request, 'Your password has been updated! Please sign in.')
+            return redirect('account_login')
+
+    return render(request, 'budgetapp/password_reset_confirm.html')

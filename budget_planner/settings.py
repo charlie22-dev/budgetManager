@@ -20,7 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n2l)!uchp+eapb=s3qul$fgb^!l)txa!gt%nr_9_c0@pgnchi_'
+from decouple import config
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-n2l)!uchp+eapb=s3qul$fgb^!l)txa!gt%nr_9_c0@pgnchi_')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -112,9 +113,9 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
+# Updated to remove allauth deprecation warnings (allauth v65+)
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 
 
 
@@ -139,5 +140,14 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'account_login'
 LOGIN_URL = 'account_login'
+
+# Gmail SMTP Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='malinaocharlie74@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='agdmjxtalMfkjrgk')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='TipidTracker <malinaocharlie74@gmail.com>')
 
 # Trigger server reload
