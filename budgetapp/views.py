@@ -106,15 +106,68 @@ def dashboard(request):
     total_funds       = max(float(total_income) - float(total_transfers) - float(savings_from_funds), 0)
     remaining_balance = max(float(total_transfers) - float(all_expenses_sum) - float(savings_from_balance), 0)
 
-    # Insights
-    insights = []
-    if period == 'monthly':
-        month_savings = _agg(Saving.objects.filter(user=request.user, date__gte=today.replace(day=1)))
-        if month_savings > 0:
-            insights.append(f"You saved ₱{month_savings:,.2f} this month.")
+    # Goals queryset (used both for insights and progress bars below)
+    goals = SavingsGoal.objects.filter(user=request.user)
 
-    # Goals progress
-    goals         = SavingsGoal.objects.filter(user=request.user)
+    # Smart Insights Engine — always-on, multi-signal analysis
+    insights = []
+
+    # 1. Savings rate insight
+    if total_income > 0:
+        savings_rate = (float(total_savings) / float(total_income)) * 100
+        if savings_rate >= 20:
+            insights.append(f"🎉 Great discipline! You're saving {savings_rate:.1f}% of your total funds — above the recommended 20%.")
+        elif savings_rate > 0:
+            insights.append(f"💡 Your savings rate is {savings_rate:.1f}%. Try to reach 20% of your funds for a healthy financial cushion.")
+
+    # 2. Balance health
+    if total_income > 0 and remaining_balance >= 0:
+        balance_pct = (float(remaining_balance) / float(total_income)) * 100
+        if remaining_balance == 0:
+            insights.append("⚠️ Your remaining balance is ₱0.00. Consider transferring more funds to your balance before adding expenses.")
+        elif balance_pct < 10:
+            insights.append(f"⚠️ Your remaining balance is only {balance_pct:.1f}% of your total funds. You're running low — spend carefully!")
+        elif balance_pct > 50:
+            insights.append(f"✅ Your remaining balance is healthy at {balance_pct:.1f}% of your total funds.")
+
+    # 3. Monthly spending insight
+    month_start = today.replace(day=1)
+    month_expenses = _agg(Expense.objects.filter(user=request.user, date__gte=month_start), 'total')
+    if month_expenses > 0:
+        insights.append(f"📅 You've spent ₱{month_expenses:,.2f} so far this month.")
+
+    # 4. Monthly savings activity
+    month_savings = _agg(Saving.objects.filter(user=request.user, date__gte=month_start))
+    if month_savings > 0:
+        insights.append(f"🌱 You've saved ₱{month_savings:,.2f} this month. Keep it up!")
+    elif total_income > 0:
+        insights.append("💡 No savings recorded this month yet. Even a small amount goes a long way!")
+
+    # 5. Expense vs. income ratio (all-time)
+    if total_income > 0 and all_expenses_sum > 0:
+        expense_ratio = (float(all_expenses_sum) / float(total_income)) * 100
+        if expense_ratio > 80:
+            insights.append(f"🔴 Your expenses are {expense_ratio:.1f}% of your total funds. Consider reviewing your spending habits.")
+        elif expense_ratio < 40:
+            insights.append(f"💚 Efficient spending! Your expenses are only {expense_ratio:.1f}% of your total funds.")
+
+    # 6. Goal deadline warnings
+    for g in goals:
+        if g.deadline:
+            days_remaining = (g.deadline - today).days
+            saved_for_goal = _agg(Saving.objects.filter(user=request.user, goal=g))
+            remaining_for_goal = float(g.target_amount) - float(saved_for_goal)
+            if remaining_for_goal > 0:
+                if days_remaining <= 0:
+                    insights.append(f"🚨 Your goal '{g.name}' deadline has passed! ₱{remaining_for_goal:,.2f} still remaining.")
+                elif days_remaining <= 30:
+                    insights.append(f"⏳ Goal '{g.name}' is due in {days_remaining} day{'s' if days_remaining != 1 else ''}! ₱{remaining_for_goal:,.2f} still needed.")
+
+    # 7. No expense activity this month
+    if month_expenses == 0 and total_income > 0:
+        insights.append("📊 No expenses logged this month. Make sure to track your spending regularly for accurate insights.")
+
+    # Goals progress (goals queryset already fetched above)
     goal_progress = []
     for g in goals:
         saved  = _agg(Saving.objects.filter(user=request.user, goal=g))
@@ -123,6 +176,7 @@ def dashboard(request):
             pct    = min((float(saved) / float(target)) * 100, 100)
             status = 'completed' if pct >= 100 else 'in_progress'
             goal_progress.append({
+                'pk':        g.pk,
                 'name':      g.name,
                 'saved':     float(saved),
                 'target':    float(target),
@@ -241,7 +295,14 @@ def income_reset(request):
 # ---------------------------------------------------------------------------
 @login_required
 def savings_list(request):
-    savings       = Saving.objects.filter(user=request.user).select_related('goal').order_by('-date')
+    sort_by  = request.GET.get('sort', 'date')
+    sort_dir = request.GET.get('dir', 'asc')   # asc = oldest first (lowest date)
+
+    valid_sorts = {'date': 'date', 'amount': 'amount', 'purpose': 'purpose'}
+    sort_field  = valid_sorts.get(sort_by, 'date')
+    order_expr  = sort_field if sort_dir == 'asc' else f'-{sort_field}'
+
+    savings       = Saving.objects.filter(user=request.user).select_related('goal').order_by(order_expr)
     total_savings = _agg(savings)
 
     goals         = SavingsGoal.objects.filter(user=request.user)
@@ -264,7 +325,8 @@ def savings_list(request):
 
     return render(request, 'budgetapp/savings_list.html',
                   {'savings': savings, 'total_savings': total_savings,
-                   'goal_progress': goal_progress})
+                   'goal_progress': goal_progress,
+                   'sort_by': sort_by, 'sort_dir': sort_dir})
 
 
 @login_required

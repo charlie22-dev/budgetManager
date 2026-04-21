@@ -9,9 +9,6 @@
         <p class="text-slate-500 dark:text-gray-400 mt-1 max-w-md">Track your financial growth and saving consistency over time.</p>
     </div>
     <div class="flex flex-wrap items-center gap-3">
-        <a href="{% url 'savings_list' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
-            <i class="fas fa-arrow-left mr-2"></i> Back to Savings
-        </a>
         <a href="{% url 'monitoring' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all shadow-sm active:scale-95">
             <i class="fas fa-chart-line mr-2"></i> Expense Monitoring
         </a>
@@ -46,15 +43,16 @@
     </div>
     {% endif %}
 </div>
-
+{{ dates|json_script:"dates-data" }}
+{{ totals|json_script:"totals-data" }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const canvas = document.getElementById('savingsChart');
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        const dates = {{ dates|safe }};
-        const totals = {{ totals|safe }};
+        const dates = JSON.parse(document.getElementById('dates-data').textContent);
+        const totals = JSON.parse(document.getElementById('totals-data').textContent);
         
         const isDark = document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#94a3b8' : '#64748b';

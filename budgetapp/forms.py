@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from .models import Expense, Income, Saving, BalanceTransfer, SavingsGoal
 
 
@@ -29,6 +30,16 @@ class SavingsGoalForm(forms.ModelForm):
                 'type':  'date',
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['deadline'].widget.attrs['min'] = timezone.localtime().date().isoformat()
+
+    def clean_deadline(self):
+        deadline = self.cleaned_data.get('deadline')
+        if deadline and deadline < timezone.localtime().date():
+            raise ValidationError("Deadline cannot be in the past.")
+        return deadline
 
     def clean_target_amount(self):
         amount = self.cleaned_data.get('target_amount')
@@ -67,6 +78,7 @@ class ExpenseForm(forms.ModelForm):
             'date':     forms.DateInput(attrs={
                 'class': 'form-control',
                 'type':  'date',
+                'readonly': 'readonly',
             }),
         }
 
@@ -111,6 +123,7 @@ class IncomeForm(forms.ModelForm):
             'date':   forms.DateInput(attrs={
                 'class': 'form-control',
                 'type':  'date',
+                'readonly': 'readonly',
             }),
         }
 
@@ -148,6 +161,7 @@ class SavingForm(forms.ModelForm):
             'date':    forms.DateInput(attrs={
                 'class': 'form-control',
                 'type':  'date',
+                'readonly': 'readonly',
             }),
         }
 
@@ -184,6 +198,7 @@ class BalanceTransferForm(forms.ModelForm):
             'date':   forms.DateInput(attrs={
                 'class': 'form-control',
                 'type':  'date',
+                'readonly': 'readonly',
             }),
         }
 

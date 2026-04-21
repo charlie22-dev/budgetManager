@@ -88,8 +88,43 @@
 
 <!-- Table Container -->
 <div class="bg-white dark:bg-dark-surface rounded-3xl shadow-sm border border-slate-100 dark:border-dark-border overflow-hidden">
-    <div class="px-6 py-5 border-b border-slate-50 dark:border-dark-border flex justify-between items-center bg-slate-50/30 dark:bg-gray-800/20">
-        <h3 class="text-lg font-black text-slate-900 dark:text-white">Your Savings Journey</h3>
+    <div class="px-6 py-5 border-b border-slate-50 dark:border-dark-border flex flex-wrap gap-3 justify-between items-center bg-slate-50/30 dark:bg-gray-800/20">
+        <div class="flex items-center gap-3 flex-wrap">
+            <h3 class="text-lg font-black text-slate-900 dark:text-white">Your Savings Journey</h3>
+            <!-- Sort chips -->
+            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-gray-800 p-1 rounded-xl">
+                {% with next_dir_date=sort_dir|yesno:'desc,asc' %}
+                <a href="?sort=date&dir={% if sort_by == 'date' %}{{ next_dir_date }}{% else %}asc{% endif %}"
+                   class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all
+                          {% if sort_by == 'date' %}bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm{% else %}text-slate-400 hover:text-slate-600 dark:hover:text-gray-300{% endif %}">
+                    <i class="fas fa-calendar-alt"></i> Date
+                    {% if sort_by == 'date' %}
+                        <i class="fas fa-arrow-{% if sort_dir == 'asc' %}up{% else %}down{% endif %} text-[10px] ml-0.5"></i>
+                    {% endif %}
+                </a>
+                {% endwith %}
+                {% with next_dir_amt=sort_dir|yesno:'desc,asc' %}
+                <a href="?sort=amount&dir={% if sort_by == 'amount' %}{{ next_dir_amt }}{% else %}asc{% endif %}"
+                   class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all
+                          {% if sort_by == 'amount' %}bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm{% else %}text-slate-400 hover:text-slate-600 dark:hover:text-gray-300{% endif %}">
+                    <i class="fas fa-coins"></i> Amount
+                    {% if sort_by == 'amount' %}
+                        <i class="fas fa-arrow-{% if sort_dir == 'asc' %}up{% else %}down{% endif %} text-[10px] ml-0.5"></i>
+                    {% endif %}
+                </a>
+                {% endwith %}
+                {% with next_dir_pur=sort_dir|yesno:'desc,asc' %}
+                <a href="?sort=purpose&dir={% if sort_by == 'purpose' %}{{ next_dir_pur }}{% else %}asc{% endif %}"
+                   class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all
+                          {% if sort_by == 'purpose' %}bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm{% else %}text-slate-400 hover:text-slate-600 dark:hover:text-gray-300{% endif %}">
+                    <i class="fas fa-tag"></i> Purpose
+                    {% if sort_by == 'purpose' %}
+                        <i class="fas fa-arrow-{% if sort_dir == 'asc' %}up{% else %}down{% endif %} text-[10px] ml-0.5"></i>
+                    {% endif %}
+                </a>
+                {% endwith %}
+            </div>
+        </div>
         {% if savings %}
         <a href="{% url 'saving_delete_all' %}" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-100 transition-all shadow-sm active:scale-95">
             <i class="fas fa-trash-alt mr-1.5"></i> Delete All

@@ -151,3 +151,4 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='agdmjxtalMfkjrgk')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='TipidTracker <malinaocharlie74@gmail.com>')
 
 # Trigger server reload
+ALLOWED_HOSTS = ['*']

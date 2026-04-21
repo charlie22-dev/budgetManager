@@ -320,18 +320,84 @@
             <div class="modal-loading-overlay absolute inset-0 bg-white/70 dark:bg-dark-surface/70 backdrop-blur-sm hidden z-10 flex items-center justify-center rounded-b-2xl">
                 <div class="skeleton" style="width:80%;height:200px;"></div>
             </div>
-            <form action="{% url 'expense_create' %}" method="POST" class="ajax-form space-y-4">
+
+            <form id="expenseFormEl" action="{% url 'expense_create' %}" method="POST" class="ajax-form space-y-4">
                 {% csrf_token %}
-                {% for field in expense_form %}
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+
+                <!-- Mode Toggle -->
+                <div class="flex items-center bg-slate-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
+                    <button type="button" id="modeUnitBtn" onclick="setExpenseMode('unit')"
+                        class="flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-200 bg-white dark:bg-gray-700 text-rose-600 dark:text-white shadow-sm">
+                        <i class="fas fa-calculator mr-1"></i> Qty &times; Unit Price
+                    </button>
+                    <button type="button" id="modeTotalBtn" onclick="setExpenseMode('total')"
+                        class="flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-200 text-gray-400 dark:text-gray-500">
+                        <i class="fas fa-coins mr-1"></i> Total Amount Only
+                    </button>
                 </div>
-                {% endfor %}
-                <div class="mt-8 flex justify-end gap-3">
-                    <button type="button" onclick="closeModal('expenseModal')" class="px-5 py-2 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl">Cancel</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-lg shadow-rose-500/30">Save Expense</button>
+                <p class="text-xs text-gray-400 dark:text-gray-500 -mt-1 pb-1 border-b border-slate-100 dark:border-gray-700">
+                    Use <strong class="text-gray-500 dark:text-gray-400">Total Amount Only</strong> when items have different prices (e.g. a mixed grocery basket).
+                </p>
+
+                <!-- Item Name (always shown) -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">Item Name</label>
+                    <input type="text" name="item" id="exp_item" required autofocus
+                        placeholder="e.g. Groceries, Lunch, Transport"
+                        class="form-control w-full">
+                </div>
+
+                <!-- UNIT PRICE MODE -->
+                <div id="unitModeFields" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">Quantity</label>
+                            <input type="number" name="quantity" id="exp_quantity" min="1" value="1"
+                                placeholder="1" class="form-control w-full">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">Price per Unit (&#x20B1;)</label>
+                            <input type="number" name="amount" id="exp_amount" step="0.01" min="0.01"
+                                placeholder="0.00" class="form-control w-full">
+                        </div>
+                    </div>
+                    <!-- Live total preview -->
+                    <div id="expTotalPreview" class="hidden">
+                        <div class="flex items-center justify-between bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl px-4 py-3">
+                            <span class="text-sm font-bold text-rose-700 dark:text-rose-400">Computed Total:</span>
+                            <span id="expTotalValue" class="text-lg font-black text-rose-600 dark:text-rose-400">&#x20B1;0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOTAL AMOUNT MODE -->
+                <div id="totalModeFields" class="hidden">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">
+                        Total Amount (&#x20B1;)
+                        <span class="ml-1 text-xs font-normal text-gray-400 dark:text-gray-500">— full cost, no math needed</span>
+                    </label>
+                    <input type="number" id="exp_total_input" step="0.01" min="0.01"
+                        placeholder="e.g. 350.00" class="form-control w-full">
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        This will be saved as Qty&nbsp;=&nbsp;1, Amount&nbsp;=&nbsp;your total.
+                    </p>
+                </div>
+
+                <!-- Date (always shown, locked to today) -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">
+                        <i class="fas fa-lock text-xs text-slate-400 mr-1"></i>Date <span class="text-xs font-normal text-gray-400 ml-1">(auto-set to today)</span>
+                    </label>
+                    <input type="date" name="date" id="exp_date" readonly
+                        class="form-control w-full cursor-not-allowed opacity-70 bg-slate-50 dark:bg-gray-800/60 select-none pointer-events-none">
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('expenseModal')"
+                        class="px-5 py-2 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl">Cancel</button>
+                    <button type="submit"
+                        class="px-5 py-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-lg shadow-rose-500/30">Save Expense</button>
                 </div>
             </form>
         </div>
@@ -423,6 +489,121 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => modal.classList.add('hidden'), 200);
     };
 
+    // ── Expense Modal: Mode Toggle ──────────────────────────────────────────
+    let expenseMode = 'unit'; // 'unit' | 'total'
+
+    window.setExpenseMode = (mode) => {
+        expenseMode = mode;
+        const unitFields  = document.getElementById('unitModeFields');
+        const totalFields = document.getElementById('totalModeFields');
+        const unitBtn     = document.getElementById('modeUnitBtn');
+        const totalBtn    = document.getElementById('modeTotalBtn');
+
+        if (mode === 'unit') {
+            unitFields.classList.remove('hidden');
+            totalFields.classList.add('hidden');
+            unitBtn.classList.add('bg-white', 'dark:bg-gray-700', 'text-rose-600', 'dark:text-white', 'shadow-sm');
+            unitBtn.classList.remove('text-gray-400', 'dark:text-gray-500');
+            totalBtn.classList.remove('bg-white', 'dark:bg-gray-700', 'text-rose-600', 'dark:text-white', 'shadow-sm');
+            totalBtn.classList.add('text-gray-400', 'dark:text-gray-500');
+            // re-enable native form fields
+            document.getElementById('exp_quantity').required = true;
+            document.getElementById('exp_amount').required   = true;
+            document.getElementById('exp_total_input').required = false;
+        } else {
+            unitFields.classList.add('hidden');
+            totalFields.classList.remove('hidden');
+            totalBtn.classList.add('bg-white', 'dark:bg-gray-700', 'text-rose-600', 'dark:text-white', 'shadow-sm');
+            totalBtn.classList.remove('text-gray-400', 'dark:text-gray-500');
+            unitBtn.classList.remove('bg-white', 'dark:bg-gray-700', 'text-rose-600', 'dark:text-white', 'shadow-sm');
+            unitBtn.classList.add('text-gray-400', 'dark:text-gray-500');
+            document.getElementById('exp_quantity').required = false;
+            document.getElementById('exp_amount').required   = false;
+            document.getElementById('exp_total_input').required = true;
+            // Hide live preview
+            document.getElementById('expTotalPreview').classList.add('hidden');
+        }
+    };
+
+    // Always lock date field to today's real date (not editable)
+    const expDateField = document.getElementById('exp_date');
+    function setTodayDate() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm   = String(today.getMonth() + 1).padStart(2, '0');
+        const dd   = String(today.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+    if (expDateField) expDateField.value = setTodayDate();
+
+    // Live total preview (unit mode only)
+    const expQty    = document.getElementById('exp_quantity');
+    const expAmt    = document.getElementById('exp_amount');
+    const expPreview = document.getElementById('expTotalPreview');
+    const expTotalVal = document.getElementById('expTotalValue');
+
+    function updateExpPreview() {
+        if (expenseMode !== 'unit') return;
+        const qty = parseFloat(expQty?.value) || 0;
+        const amt = parseFloat(expAmt?.value) || 0;
+        const total = qty * amt;
+        if (qty > 0 && amt > 0) {
+            expPreview.classList.remove('hidden');
+            expTotalVal.textContent = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else {
+            expPreview.classList.add('hidden');
+        }
+    }
+
+    expQty?.addEventListener('input', updateExpPreview);
+    expAmt?.addEventListener('input', updateExpPreview);
+
+    // Pre-submit: in total mode → inject qty=1, amount=total into the hidden inputs
+    const expFormEl = document.getElementById('expenseFormEl');
+    if (expFormEl) {
+        expFormEl.addEventListener('submit', (e) => {
+            if (expenseMode === 'total') {
+                // The global formatter creates hidden[name="amount"] from the display field.
+                // For total mode, find the hidden amount input and set it to the total value.
+                const totalDisplayEl = document.getElementById('exp_total_input');
+                const totalVal = parseFloat((totalDisplayEl?.value || '').replace(/,/g, '')) || 0;
+
+                if (totalVal <= 0) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    showToast('Please enter a valid total amount.', true);
+                    return;
+                }
+
+                // Find the hidden inputs created by the formatter for quantity & amount
+                const hiddenQty = expFormEl.querySelector('input[type="hidden"][name="quantity"]');
+                const hiddenAmt = expFormEl.querySelector('input[type="hidden"][name="amount"]');
+
+                if (hiddenQty) hiddenQty.value = 1;
+                if (hiddenAmt) hiddenAmt.value = totalVal.toFixed(2);
+
+                // Fallback: if formatter hasn't run yet, set the display inputs directly
+                if (!hiddenQty) { expQty.value = 1; expQty.name = 'quantity'; }
+                if (!hiddenAmt) { expAmt.value = totalVal.toFixed(2); expAmt.name = 'amount'; }
+            }
+        }, true); // capture phase — runs before the AJAX handler
+    }
+
+    // Reset expense modal to unit mode whenever it's opened
+    const origOpenModal = window.openModal;
+    window.openModal = (id) => {
+        origOpenModal(id);
+        if (id === 'expenseModal') {
+            setExpenseMode('unit');
+            expQty.value = 1;
+            expAmt.value = '';
+            document.getElementById('exp_total_input').value = '';
+            document.getElementById('exp_item').value = '';
+            expPreview.classList.add('hidden');
+            if (expDateField) expDateField.value = setTodayDate();
+        }
+    };
+
     // 2. Toast Notification System
     const showToast = (message, isError = false) => {
         const toast = document.createElement('div');
@@ -504,6 +685,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             const star = document.createElement('i');
                             star.className = 'fas fa-star text-amber-400 absolute -right-1 -top-1.5 text-xs drop-shadow-sm';
                             parentWrapper.appendChild(star);
+                        }
+                        // Fire the celebration popup (AJAX-triggered goal completion)
+                        const goalWasAlreadyComplete = oldSaved >= targetTotal;
+                        if (!goalWasAlreadyComplete) {
+                            setTimeout(() => showGoalCelebration(goal.name, targetSaved, targetTotal, goal.pk), 1400);
                         }
                     }
                     
@@ -665,6 +851,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             updateSavingsGoalsUI(data.updated_data.goal_progress);
                         }
                     }
+                    
+                    // Seamlessly refresh the recent expenses table so new entries appear instantly
+                    refreshExpensesTable();
+
                 } else {
                     showToast(data.message || 'Validation failed. Please check your data.', true);
                 }
@@ -681,29 +871,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Seamless AJAX Pagination & Sorting for Expenses Table
+    // Helper: Seamless AJAX Refresh for Expenses Table
+    const refreshExpensesTable = (url = window.location.href) => {
+        const tableWrap = document.getElementById('expenses-table');
+        if (!tableWrap) return Promise.resolve();
+        
+        tableWrap.style.transition = 'opacity 0.2s ease';
+        tableWrap.style.opacity = '0.4';
+        
+        return fetch(url)
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const newTable = doc.getElementById('expenses-table');
+                if (newTable) {
+                    tableWrap.innerHTML = newTable.innerHTML;
+                }
+                tableWrap.style.opacity = '1';
+            }).catch(e => {
+                console.error('Failed to update table:', e);
+                tableWrap.style.opacity = '1';
+                throw e; // Rethrow so caller can catch it
+            });
+    };
+
+    // Listen for Pagination & Sorting clicks within the table
     document.addEventListener('click', function(e) {
         const link = e.target.closest('#expenses-table a');
-        
-        // Target only links inside the table that do pagination/sorting (start with '?')
         if (link && link.getAttribute('href') && link.getAttribute('href').startsWith('?')) {
             e.preventDefault();
             const url = link.href;
-            const tableWrap = document.getElementById('expenses-table');
-            
-            // Add a smooth loading state
-            tableWrap.style.transition = 'opacity 0.2s ease';
-            tableWrap.style.opacity = '0.4';
-            
-            fetch(url)
-                .then(r => r.text())
-                .then(html => {
-                    const doc = new DOMParser().parseFromString(html, 'text/html');
-                    const newTableHtml = doc.getElementById('expenses-table').innerHTML;
-                    
-                    tableWrap.innerHTML = newTableHtml;
-                    tableWrap.style.opacity = '1';
-                    
+            refreshExpensesTable(url)
+                .then(() => {
                     // Update URL bar without reload, so refresh still works
                     window.history.pushState({path: url}, '', url);
                 })
@@ -720,6 +919,236 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ── Savings Goal Celebration Popup ──────────────────────────────────────
+
+    // Check on page load for any already-completed goals (show once per session)
+    {% for gp in goal_progress %}
+    {% if gp.status == 'completed' %}
+    (function() {
+        const sessionKey = 'goal_celebrated_{{ gp.pk }}';
+        if (!sessionStorage.getItem(sessionKey)) {
+            sessionStorage.setItem(sessionKey, '1');
+            setTimeout(() => showGoalCelebration(
+                '{{ gp.name|escapejs }}',
+                {{ gp.saved }},
+                {{ gp.target }},
+                {{ gp.pk }}
+            ), 800);
+        }
+    })();
+    {% endif %}
+    {% endfor %}
+
+    window.showGoalCelebration = function(goalName, saved, target, pk) {
+        // Mark as celebrated so refreshes don't re-show
+        if (pk) sessionStorage.setItem('goal_celebrated_' + pk, '1');
+
+        const overlay = document.getElementById('goalCelebrationOverlay');
+        const card    = document.getElementById('goalCelebrationCard');
+        const nameEl  = document.getElementById('celebGoalName');
+        const amtEl   = document.getElementById('celebGoalAmount');
+
+        nameEl.textContent = goalName;
+        amtEl.textContent  = '₱' + saved.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Spawn confetti
+        spawnConfetti();
+
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            overlay.classList.add('celeb-overlay-in');
+            card.classList.add('celeb-card-in');
+        });
+    };
+
+    window.closeGoalCelebration = function() {
+        const overlay = document.getElementById('goalCelebrationOverlay');
+        const card    = document.getElementById('goalCelebrationCard');
+        overlay.classList.remove('celeb-overlay-in');
+        card.classList.remove('celeb-card-in');
+        card.classList.add('celeb-card-out');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            card.classList.remove('celeb-card-out');
+            // Clear confetti
+            document.getElementById('confettiCanvas')?.remove();
+        }, 400);
+    };
+
+    function spawnConfetti() {
+        const existing = document.getElementById('confettiCanvas');
+        if (existing) existing.remove();
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'confettiCanvas';
+        canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998;';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const colors = ['#6366f1','#10b981','#f59e0b','#ec4899','#3b82f6','#a855f7','#14b8a6'];
+        const pieces = Array.from({ length: 120 }, () => ({
+            x:   Math.random() * canvas.width,
+            y:   -10 - Math.random() * 80,
+            r:   4 + Math.random() * 5,
+            d:   3 + Math.random() * 5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            tilt: Math.random() * 10 - 5,
+            tiltSpeed: 0.1 + Math.random() * 0.2,
+            opacity: 1,
+            spin: Math.random() * Math.PI * 2,
+            spinSpeed: (Math.random() - 0.5) * 0.15,
+        }));
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+                p.y    += p.d;
+                p.tilt += p.tiltSpeed;
+                p.spin += p.spinSpeed;
+                p.opacity = Math.max(0, 1 - p.y / (canvas.height * 1.1));
+                ctx.save();
+                ctx.globalAlpha = p.opacity;
+                ctx.fillStyle   = p.color;
+                ctx.translate(p.x + p.tilt, p.y);
+                ctx.rotate(p.spin);
+                ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 1.6);
+                ctx.restore();
+            });
+            frame++;
+            if (frame < 220) requestAnimationFrame(draw);
+            else { canvas.remove(); }
+        }
+        requestAnimationFrame(draw);
+    }
+
 });
 </script>
+
+<!-- ── Premium Savings Goal Celebration Popup ────────────────────── -->
+<style>
+    #goalCelebrationOverlay {
+        background: rgba(0,0,0,0);
+        transition: background 0.35s ease;
+    }
+    #goalCelebrationOverlay.celeb-overlay-in {
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    #goalCelebrationCard {
+        transform: scale(0.78) translateY(30px);
+        opacity: 0;
+        transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease;
+    }
+    #goalCelebrationCard.celeb-card-in {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+    #goalCelebrationCard.celeb-card-out {
+        transform: scale(0.88) translateY(20px);
+        opacity: 0;
+        transition: transform 0.3s ease-in, opacity 0.25s ease-in;
+    }
+    @keyframes trophydrop {
+        0%   { transform: translateY(-18px) scale(0.7); opacity:0; }
+        60%  { transform: translateY(4px) scale(1.08); opacity:1; }
+        80%  { transform: translateY(-3px) scale(0.97); }
+        100% { transform: translateY(0) scale(1); opacity:1; }
+    }
+    .trophy-anim { animation: trophydrop 0.7s cubic-bezier(0.34,1.26,0.64,1) 0.3s both; }
+    @keyframes pulseGlow {
+        0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4), 0 0 30px rgba(16,185,129,0.15); }
+        50%      { box-shadow: 0 0 0 14px rgba(16,185,129,0), 0 0 50px rgba(16,185,129,0.3); }
+    }
+    .trophy-glow { animation: pulseGlow 2s ease-in-out 0.9s infinite; }
+    @keyframes starPop {
+        0%   { transform: scale(0) rotate(-30deg); opacity:0; }
+        60%  { transform: scale(1.2) rotate(8deg); opacity:1; }
+        100% { transform: scale(1) rotate(0deg); opacity:1; }
+    }
+    .star-pop-1 { animation: starPop 0.5s ease 0.55s both; }
+    .star-pop-2 { animation: starPop 0.5s ease 0.70s both; }
+    .star-pop-3 { animation: starPop 0.5s ease 0.85s both; }
+    @keyframes textSlideUp {
+        from { transform: translateY(12px); opacity:0; }
+        to   { transform: translateY(0);    opacity:1; }
+    }
+    .text-slide-1 { animation: textSlideUp 0.4s ease 0.55s both; }
+    .text-slide-2 { animation: textSlideUp 0.4s ease 0.68s both; }
+    .text-slide-3 { animation: textSlideUp 0.4s ease 0.81s both; }
+    .text-slide-4 { animation: textSlideUp 0.4s ease 0.94s both; }
+    @keyframes shimmerLine {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+    }
+    .shimmer-text {
+        background: linear-gradient(90deg, #10b981 0%, #6ee7b7 40%, #10b981 60%, #064e3b 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmerLine 2.5s linear 0.9s infinite;
+    }
+</style>
+
+<div id="goalCelebrationOverlay"
+     class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4"
+     onclick="closeGoalCelebration()">
+    <div id="goalCelebrationCard"
+         class="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-emerald-100 dark:border-emerald-500/20"
+         onclick="event.stopPropagation()">
+
+        <!-- Top ribbon gradient -->
+        <div class="h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-indigo-500"></div>
+
+        <!-- Soft radial bg -->
+        <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.08) 0%, transparent 65%);"></div>
+
+        <div class="px-8 pt-8 pb-6 text-center relative">
+
+            <!-- Stars row -->
+            <div class="flex justify-center items-center gap-3 mb-4">
+                <i class="fas fa-star text-2xl text-amber-300 star-pop-1"></i>
+                <i class="fas fa-star text-3xl text-amber-400 star-pop-2"></i>
+                <i class="fas fa-star text-2xl text-amber-300 star-pop-3"></i>
+            </div>
+
+            <!-- Trophy Icon -->
+            <div class="trophy-anim trophy-glow inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-xl shadow-emerald-500/30 mb-5">
+                <i class="fas fa-trophy text-white text-4xl"></i>
+            </div>
+
+            <!-- Headline -->
+            <p class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1 text-slide-1">Goal Achieved!</p>
+            <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-1 shimmer-text text-slide-2" id="celebGoalName">Goal Name</h2>
+            <p class="text-sm text-gray-400 dark:text-gray-500 mb-3 text-slide-3">100% Funded &bull; Well done, you crushed it! 🎉</p>
+
+            <!-- Amount badge -->
+            <div class="inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl px-6 py-3 text-slide-4">
+                <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400" id="celebGoalAmount">₱0.00</span>
+                <span class="text-sm font-semibold text-emerald-500 dark:text-emerald-500">saved</span>
+            </div>
+
+            <!-- Divider -->
+            <div class="my-6 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent"></div>
+
+            <!-- Action buttons -->
+            <div class="flex gap-3">
+                <button onclick="closeGoalCelebration()"
+                    class="flex-1 py-3 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-2xl transition-all active:scale-95">
+                    Maybe Later
+                </button>
+                <a href="{% url 'savings_list' %}"
+                    class="flex-1 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-bullseye"></i> View Goals
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

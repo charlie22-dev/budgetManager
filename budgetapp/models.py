@@ -11,7 +11,7 @@ class Expense(models.Model):
     item     = models.CharField(max_length=200)
     quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     amount   = models.DecimalField(max_digits=10, decimal_places=2,
-                                   validators=[MinValueValidator(Decimal('0.01'))])
+    validators=[MinValueValidator(Decimal('0.01'))])
     total    = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     date     = models.DateField(default=datetime.date.today)
 
@@ -27,7 +27,7 @@ class Income(models.Model):
     user   = models.ForeignKey(User, on_delete=models.CASCADE)
     source = models.CharField(max_length=200, default='Starting Balance')
     amount = models.DecimalField(max_digits=12, decimal_places=2,
-                                 validators=[MinValueValidator(Decimal('0.01'))])
+    validators=[MinValueValidator(Decimal('0.01'))])
     date   = models.DateField(default=datetime.date.today)
 
     def __str__(self):

@@ -120,7 +120,8 @@
         </table>
     </div>
 </div>
-
+{{ dates|json_script:"dates-data" }}
+{{ totals|json_script:"totals-data" }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Remove skeleton rows
@@ -130,8 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    const dates = {{ dates|safe }};
-    const totals = {{ totals|safe }};
+    const dates = JSON.parse(document.getElementById('dates-data').textContent);
+    const totals = JSON.parse(document.getElementById('totals-data').textContent);
 
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#94a3b8' : '#64748b';
