@@ -315,7 +315,7 @@
                 {% if messages %}
                 <div class="mb-8 space-y-3" id="django-messages">
                     {% for message in messages %}
-                    <div x-data="{ show: true, progress: 100 }"
+                    <div x-data="{ show: true }"
                          x-show="show"
                          x-transition:enter="transition ease-out duration-100"
                          x-transition:enter-start="opacity-0 translate-y-[-4px]"
@@ -323,17 +323,7 @@
                          x-transition:leave="transition ease-in duration-150"
                          x-transition:leave-start="opacity-100"
                          x-transition:leave-end="opacity-0 translate-x-4"
-                         x-init="
-                            let start = null;
-                            const dur = 2500;
-                            function step(ts) {
-                                if (!start) start = ts;
-                                progress = Math.max(0, 100 - ((ts - start) / dur) * 100);
-                                if (ts - start < dur) requestAnimationFrame(step);
-                                else show = false;
-                            }
-                            requestAnimationFrame(step);
-                         "
+                         x-init="setTimeout(() => show = false, 3500);"
                          class="relative flex items-center justify-between p-4 rounded-xl shadow-sm border overflow-hidden
                          {% if message.tags == 'success' %}bg-green-50 text-green-800 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20
                          {% elif message.tags == 'warning' %}bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20
@@ -354,10 +344,7 @@
                             <i class="fas fa-times text-sm"></i>
                         </button>
 
-                        <!-- Auto-dismiss progress bar -->
-                        <div class="absolute bottom-0 left-0 h-[3px] rounded-full transition-none
-                             {% if message.tags == 'success' %}bg-green-400/60{% elif message.tags == 'warning' %}bg-amber-400/60{% else %}bg-red-400/60{% endif %}"
-                             :style="`width: ${progress}%`"></div>
+
                     </div>
                     {% endfor %}
                 </div>
