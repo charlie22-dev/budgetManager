@@ -17,6 +17,9 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Intro.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+    
     {% load static %}
     <!-- Tailwind CSS & Alpine.js -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -201,6 +204,44 @@
             gap: 4px;
         }
         .errorlist li::before { content: '\26A0\FE0F'; }
+
+        /* ─── Intro.js Custom Styling ────────────────────────────── */
+        .introjs-tooltip {
+            border-radius: 16px !important;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3) !important;
+            border: 1px solid var(--border) !important;
+            background-color: var(--surface) !important;
+            color: inherit !important;
+        }
+        .dark .introjs-tooltip {
+            color: #e2e8f0 !important;
+        }
+        .introjs-tooltipbuttons .introjs-button {
+            border-radius: 8px !important;
+            text-shadow: none !important;
+            padding: 8px 16px !important;
+            font-weight: 600 !important;
+            border: none !important;
+            transition: all 0.2s !important;
+        }
+        .introjs-nextbutton {
+            background: #4f46e5 !important;
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3) !important;
+        }
+        .introjs-nextbutton:hover { background: #4338ca !important; color: white !important; }
+        .introjs-prevbutton {
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+        }
+        .dark .introjs-prevbutton {
+            background: #334155 !important;
+            color: #cbd5e1 !important;
+            text-shadow: none !important;
+        }
+        .introjs-disabled { opacity: 0.5 !important; pointer-events: none !important; }
+        .introjs-tooltiptext { padding: 16px !important; font-family: 'Inter', sans-serif !important; font-size: 0.95rem !important; }
+        .introjs-tooltip-title { font-weight: 700 !important; font-size: 1.1rem !important; margin-bottom: 4px !important; }
     </style>
     
     <!-- PWA Configuration -->
@@ -478,5 +519,8 @@
         observer.observe(document.body, { childList: true, subtree: true });
     });
     </script>
+
+    <!-- Intro.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
 </body>
 </html>

@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from decimal import Decimal
 import datetime
 
@@ -85,3 +87,24 @@ class PasswordResetOTP(models.Model):
 
     def __str__(self):
         return f"OTP for {self.user.username} — {'used' if self.is_used else 'active'}"
+
+
+class UserSettings(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    has_completed_tutorial = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Settings for {self.user.username}"
+
+
+@receiver(post_save, sender=User)
+def create_user_settings(sender, instance, created, **kwargs):
+    if created:
+        UserSettings.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_settings(sender, instance, **kwargs):
+    if not hasattr(instance, 'usersettings'):
+        UserSettings.objects.create(user=instance)
+    else:
+        instance.usersettings.save()

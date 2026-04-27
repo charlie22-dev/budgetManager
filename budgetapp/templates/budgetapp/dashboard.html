@@ -4,15 +4,20 @@
 {% block content %}
 <div class="mb-8">
     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
-            <p class="text-gray-500 dark:text-gray-400 mt-1">Welcome back! Here's your financial summary.</p>
+        <div class="flex items-center gap-4">
+            <div data-intro="Welcome to TipidTracker! Let's take a quick tour of your dashboard." data-title="Welcome!">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
+                <p class="text-gray-500 dark:text-gray-400 mt-1">Welcome back! Here's your financial summary.</p>
+            </div>
+            <button type="button" onclick="startTutorial()" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-primary-500/10 dark:text-primary-400 transition-colors" title="Replay Tutorial">
+                <i class="fas fa-question text-sm"></i>
+            </button>
         </div>
 
         <!-- Button group container -->
         <div class="flex flex-col items-start gap-3">
             <!-- Row 1: Primary actions -->
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3" data-intro="Use these buttons to quickly log a new expense, add funds, or save money." data-title="Quick Actions">
                 <button type="button" onclick="openModal('fundsModal')" class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95">
                     <i class="fas fa-plus mr-2 text-indigo-500"></i> Add Funds
                 </button>
@@ -83,7 +88,7 @@
     {% endfor %}
 </div>
 
-<div id="metric-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" style="display:none">
+<div id="metric-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" style="display:none" data-intro="These cards show your total funds, expenses, savings, and your remaining usable balance at a glance." data-title="Your Balances">
     <!-- Total Funds -->
     <a href="{% url 'funds_history' %}" class="block bg-gradient-to-br from-white to-blue-50/30 dark:from-dark-surface dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-blue-100/50 dark:border-dark-border flex items-center gap-4 transform transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-300 cursor-pointer relative overflow-hidden group">
         <div class="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 relative z-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm group-hover:shadow-blue-200">
@@ -145,7 +150,7 @@
 <!-- INSIGHTS & PROGRESS SECTION -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
     <!-- Insights -->
-    <div class="bg-gradient-to-br from-indigo-50/50 to-white dark:from-gray-800 dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-indigo-100/50 dark:border-dark-border">
+    <div class="bg-gradient-to-br from-indigo-50/50 to-white dark:from-gray-800 dark:to-dark-surface rounded-2xl p-6 shadow-sm border border-indigo-100/50 dark:border-dark-border" data-intro="Get automatic financial advice and alerts based on your spending habits." data-title="Smart Insights">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4"><i class="fas fa-lightbulb text-amber-400 mr-2"></i> Smart Insights</h3>
         {% if insights %}
             <ul class="space-y-3">
@@ -195,7 +200,7 @@
 </div>
 
 <!-- Table Container -->
-<div id="expenses-table" class="bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border overflow-hidden scroll-mt-8">
+<div id="expenses-table" class="bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border overflow-hidden scroll-mt-8" data-intro="View, sort, and manage your recently logged expenses here." data-title="Recent Transactions">
     <div class="px-6 py-5 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white">Recent Expenses</h3>
         {% if expenses %}
@@ -1150,5 +1155,78 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     </div>
 </div>
+
+<script>
+    // ── Onboarding Tutorial ──────────────────────────────────────────
+    function startTutorial() {
+        // If not loaded yet, fallback gracefully
+        if (typeof introJs === 'undefined') return;
+        
+        introJs().setOptions({
+            showProgress: true,
+            showBullets: false,
+            disableInteraction: true,
+            overlayOpacity: 0.6,
+            steps: [
+                {
+                    element: document.querySelector('[data-title="Welcome!"]'),
+                    title: 'Welcome!',
+                    intro: "Welcome to TipidTracker! Let's take a quick tour of your dashboard.",
+                    position: 'bottom'
+                },
+                {
+                    element: document.querySelector('[data-title="Quick Actions"]'),
+                    title: 'Quick Actions',
+                    intro: 'Use these buttons to quickly log a new expense, add funds, or save money.',
+                    position: 'bottom'
+                },
+                {
+                    element: document.querySelector('#metric-cards'),
+                    title: 'Your Balances',
+                    intro: 'These cards show your total funds, expenses, savings, and your remaining usable balance at a glance.',
+                    position: 'top'
+                },
+                {
+                    element: document.querySelector('[data-title="Smart Insights"]'),
+                    title: 'Smart Insights',
+                    intro: 'Get automatic financial advice and alerts based on your spending habits.',
+                    position: 'top'
+                },
+                {
+                    element: document.querySelector('#expenses-table'),
+                    title: 'Recent Transactions',
+                    intro: 'View, sort, and manage your recently logged expenses here.',
+                    position: 'top'
+                }
+            ]
+        }).oncomplete(function() {
+            markTutorialComplete();
+        }).onexit(function() {
+            markTutorialComplete();
+        }).start();
+    }
+
+    function markTutorialComplete() {
+        // Send AJAX request to mark as complete
+        fetch('{% url "complete_tutorial" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        }).catch(err => console.error("Error marking tutorial complete", err));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Automatically start tutorial if not completed
+        const hasCompletedTutorial = "{{ request.user.usersettings.has_completed_tutorial|yesno:'true,false' }}" === "true";
+        if (!hasCompletedTutorial) {
+            // Wait a moment for page animations/skeleton to finish
+            setTimeout(() => {
+                startTutorial();
+            }, 1000);
+        }
+    });
+</script>
 
 {% endblock %}

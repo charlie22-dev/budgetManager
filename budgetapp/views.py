@@ -805,3 +805,14 @@ def password_reset_confirm(request):
             return redirect('account_login')
 
     return render(request, 'budgetapp/password_reset_confirm.html')
+
+
+@login_required
+def complete_tutorial(request):
+    """Mark the tutorial as completed for the current user."""
+    if request.method == 'POST':
+        if hasattr(request.user, 'usersettings'):
+            request.user.usersettings.has_completed_tutorial = True
+            request.user.usersettings.save()
+            return JsonResponse({'success': True})
+    return JsonResponse({'success': False}, status=400)
