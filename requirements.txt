@@ -1,0 +1,5 @@
+Django>=5.0,<7.0
+django-allauth
+python-decouple
+whitenoise
+gunicorn
