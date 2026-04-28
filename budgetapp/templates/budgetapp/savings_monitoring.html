@@ -3,67 +3,122 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
     <div>
-        <h2 class="text-3xl font-black text-slate-900 dark:text-white">Savings Monitoring</h2>
-        <p class="text-slate-500 dark:text-gray-400 mt-1 max-w-md">Track your financial growth and saving consistency over time.</p>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Savings Monitoring</h2>
+        <p class="text-slate-500 dark:text-gray-400 mt-1 text-sm">Track your financial growth and saving consistency over time.</p>
     </div>
-    <div class="flex flex-wrap items-center gap-3">
-        <a href="{% url 'monitoring' %}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 dark:bg-dark-surface dark:text-gray-200 dark:border-dark-border dark:hover:bg-gray-800 transition-all shadow-sm active:scale-95">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'monitoring' %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 dark:bg-dark-surface dark:text-indigo-400 dark:border-dark-border transition-colors shadow-sm">
             <i class="fas fa-chart-line mr-2"></i> Expense Monitoring
         </a>
-        <button onclick="window.print()" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm hidden sm:inline-flex active:scale-95">
-            <i class="fas fa-print mr-2"></i> Print Report
+        <button onclick="window.print()" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 dark:bg-dark-surface dark:text-gray-300 dark:border-dark-border transition-colors shadow-sm no-print">
+            <i class="fas fa-print mr-2"></i> Print
         </button>
     </div>
 </div>
 
-<div class="bg-white dark:bg-dark-surface rounded-3xl shadow-sm border border-slate-100 dark:border-dark-border p-6 sm:p-10 transition-all hover:shadow-xl hover:shadow-slate-200/50 mb-8">
-    <div class="flex items-center gap-4 mb-8 pb-8 border-b border-slate-50 dark:border-dark-border">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 dark:bg-green-500/10 dark:text-green-400 flex-shrink-0 shadow-sm">
-            <i class="fas fa-piggy-bank text-xl"></i>
+<!-- Summary Stats Strip -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6" id="savings-stats-strip">
+    <div class="bg-white dark:bg-dark-surface rounded-2xl border border-slate-100 dark:border-dark-border p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-piggy-bank text-emerald-500 text-sm"></i>
         </div>
         <div>
-            <h3 class="text-xl font-black text-slate-900 dark:text-white">Daily Savings Trends</h3>
-            <p class="text-sm font-medium text-slate-400 dark:text-gray-400 mt-1">Monitor your progression towards your financial goals.</p>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Saved</p>
+            <p class="text-lg font-bold text-slate-800 dark:text-white mt-0.5" id="stat-total">₱0.00</p>
         </div>
     </div>
-    
+    <div class="bg-white dark:bg-dark-surface rounded-2xl border border-slate-100 dark:border-dark-border p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-primary-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-calendar-day text-indigo-500 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Daily Average</p>
+            <p class="text-lg font-bold text-slate-800 dark:text-white mt-0.5" id="stat-avg">₱0.00</p>
+        </div>
+    </div>
+    <div class="bg-white dark:bg-dark-surface rounded-2xl border border-slate-100 dark:border-dark-border p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-arrow-trend-up text-amber-500 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Best Day</p>
+            <p class="text-lg font-bold text-slate-800 dark:text-white mt-0.5" id="stat-peak">₱0.00</p>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Card -->
+<div class="bg-white dark:bg-dark-surface rounded-2xl border border-slate-100 dark:border-dark-border p-6 sm:p-8">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-chart-bar text-emerald-500 text-sm"></i>
+        </div>
+        <div>
+            <h3 class="text-base font-bold text-slate-800 dark:text-white">Daily Savings Trends</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Monitor your progression towards your financial goals.</p>
+        </div>
+    </div>
+
     {% if totals %}
-    <div class="relative w-full h-[400px]">
+    <div class="relative w-full h-[360px]">
         <canvas id="savingsChart"></canvas>
     </div>
     {% else %}
-    <div class="text-center py-16 text-gray-500 dark:text-gray-400">
-        <div class="inline-flex w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center mb-4 border border-gray-200 dark:border-gray-700">
-            <i class="fas fa-piggy-bank text-2xl text-gray-400 dark:text-gray-500"></i>
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-gray-800 flex items-center justify-center mb-4 border border-slate-100 dark:border-gray-700">
+            <i class="fas fa-piggy-bank text-xl text-slate-300 dark:text-gray-600"></i>
         </div>
-        <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">No savings data yet</p>
-        <p class="text-sm">Start saving to see your trends here!</p>
+        <p class="text-sm font-semibold text-slate-700 dark:text-white mb-1">No savings data yet</p>
+        <p class="text-xs text-slate-400">Start saving to see your trends appear here.</p>
+        <a href="{% url 'savings_list' %}" class="mt-4 inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm">
+            <i class="fas fa-plus mr-2"></i> Add Savings
+        </a>
     </div>
     {% endif %}
 </div>
+
 {{ dates|json_script:"dates-data" }}
 {{ totals|json_script:"totals-data" }}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const canvas = document.getElementById('savingsChart');
-        if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        const dates = JSON.parse(document.getElementById('dates-data').textContent);
-        const totals = JSON.parse(document.getElementById('totals-data').textContent);
-        
-        const isDark = document.documentElement.classList.contains('dark');
-        const textColor = isDark ? '#94a3b8' : '#64748b';
-        const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.04)';
-        const tooltipBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-        const tooltipText = isDark ? '#f8fafc' : '#0f172a';
-        const tooltipBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-        
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dates  = JSON.parse(document.getElementById('dates-data').textContent);
+    const totals = JSON.parse(document.getElementById('totals-data').textContent);
+
+    if (totals.length) {
+        const sum  = totals.reduce((a, b) => a + b, 0);
+        const avg  = sum / totals.length;
+        const peak = Math.max(...totals);
+        const fmt  = v => '₱' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('stat-total').textContent = fmt(sum);
+        document.getElementById('stat-avg').textContent   = fmt(avg);
+        document.getElementById('stat-peak').textContent  = fmt(peak);
+    }
+
+    const canvas = document.getElementById('savingsChart');
+    if (!canvas) return;
+
+    function buildChart() {
+        const isDark  = document.documentElement.classList.contains('dark');
+        const textClr = isDark ? '#94a3b8' : '#64748b';
+        const gridClr = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+        const tipBg   = isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.97)';
+        const tipText = isDark ? '#f8fafc' : '#0f172a';
+        const tipBord = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+        const ctx     = canvas.getContext('2d');
+
+        const grad = ctx.createLinearGradient(0, 0, 0, 360);
+        grad.addColorStop(0, isDark ? 'rgba(16,185,129,0.9)'  : 'rgba(16,185,129,0.85)');
+        grad.addColorStop(1, isDark ? 'rgba(16,185,129,0.3)'  : 'rgba(16,185,129,0.2)');
+
         Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = textColor;
-        
+        Chart.defaults.color = textClr;
+
+        const existing = Chart.getChart(canvas);
+        if (existing) existing.destroy();
+
         new Chart(ctx, {
             type: 'bar',
             data: {
@@ -71,19 +126,12 @@
                 datasets: [{
                     label: 'Total Saved (₱)',
                     data: totals,
-                    backgroundColor: [
-                        'rgba(16, 185, 129, 0.85)',
-                        'rgba(52, 211, 153, 0.85)',
-                        'rgba(110, 231, 183, 0.85)',
-                        'rgba(6, 182, 212, 0.85)',
-                        'rgba(59, 130, 246, 0.85)',
-                        'rgba(99, 102, 241, 0.85)',
-                        'rgba(168, 85, 247, 0.85)',
-                    ],
+                    backgroundColor: grad,
                     borderColor: 'transparent',
                     borderWidth: 0,
-                    borderRadius: 6,
-                    barPercentage: 0.6
+                    borderRadius: 8,
+                    borderSkipped: 'bottom',
+                    barPercentage: 0.55
                 }]
             },
             options: {
@@ -92,54 +140,38 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: tooltipBg,
-                        titleColor: tooltipText,
-                        bodyColor: tooltipText,
-                        borderColor: tooltipBorder,
+                        backgroundColor: tipBg,
+                        titleColor: tipText,
+                        bodyColor: tipText,
+                        borderColor: tipBord,
                         borderWidth: 1,
-                        padding: 12,
-                        titleFont: { size: 13, weight: '600', family: "'Inter', sans-serif" },
-                        bodyFont: { size: 14, weight: '500', family: "'Inter', sans-serif" },
+                        padding: 14,
+                        titleFont: { size: 12, weight: '600' },
+                        bodyFont: { size: 15, weight: '700' },
                         displayColors: false,
-                        cornerRadius: 8,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: ctx => '₱' + ctx.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 })
+                        }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: { color: gridColor, drawBorder: false },
+                        grid: { color: gridClr, drawBorder: false },
                         border: { display: false },
-                        ticks: {
-                            callback: function(value) { return '₱' + value; }
-                        }
+                        ticks: { callback: v => '₱' + v.toLocaleString('en-US') }
                     },
-                    x: {
-                        grid: { display: false, drawBorder: false },
-                        border: { display: false }
-                    }
+                    x: { grid: { display: false, drawBorder: false }, border: { display: false } }
                 },
-                animation: {
-                    y: { duration: 1200, easing: 'easeOutQuart' }
-                }
+                animation: { y: { duration: 900, easing: 'easeOutQuart' } }
             }
         });
+    }
 
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    const isDarkNow = document.documentElement.classList.contains('dark');
-                    const newChart = Chart.getChart(ctx);
-                    if (newChart) {
-                        newChart.options.plugins.tooltip.backgroundColor = isDarkNow ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-                        newChart.options.plugins.tooltip.titleColor = isDarkNow ? '#f8fafc' : '#0f172a';
-                        newChart.options.plugins.tooltip.bodyColor = isDarkNow ? '#f8fafc' : '#0f172a';
-                        newChart.options.scales.y.grid.color = isDarkNow ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.04)';
-                        newChart.update();
-                    }
-                }
-            });
-        });
-        observer.observe(document.documentElement, { attributes: true });
-    });
+    buildChart();
+    new MutationObserver(() => buildChart())
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
 </script>
 {% endblock %}

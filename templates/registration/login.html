@@ -3,9 +3,6 @@
 
 {% block content %}
 <div class="min-h-[85vh] flex items-center justify-center anim-fade-in px-4">
-    <!-- Decorative Ambient Glow Background -->
-    <div class="fixed top-20 left-1/4 w-[400px] h-[400px] bg-blue-500/20 dark:bg-blue-600/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
-    <div class="fixed bottom-10 right-1/4 w-[400px] h-[400px] bg-indigo-500/20 dark:bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
 
     <!-- Main Login Container -->
     <div class="w-full max-w-md w-full relative z-10 anim-slide-up">
@@ -44,8 +41,9 @@
 
                 <!-- Username/Email Input -->
                 <div class="space-y-2 relative" x-data="{ focused: false, val: '' }">
-                    <label for="id_username" class="absolute left-10 transition-all duration-200 pointer-events-none text-slate-400 dark:text-slate-500 font-medium"
-                           :class="focused || val.length > 0 ? '-top-3 text-xs bg-white dark:bg-[#1e293b] px-1 text-blue-600 dark:text-blue-400' : 'top-3.5 text-sm'">
+                    <label for="id_username" class="absolute left-10 pointer-events-none text-slate-400 dark:text-slate-500 font-medium"
+                           :class="focused || val.length > 0 ? '-top-3 text-xs bg-white dark:bg-[#1e293b] px-1 text-blue-600 dark:text-blue-400' : 'top-3.5 text-sm'"
+                           style="transition: top 160ms ease-out, font-size 160ms ease-out, color 160ms ease;">
                         Username
                     </label>
                     <div class="relative flex items-center">
@@ -58,8 +56,9 @@
 
                 <!-- Password Input -->
                 <div class="space-y-2 relative mt-4" x-data="{ focused: false, val: '', show: false }">
-                    <label for="id_password" class="absolute left-10 transition-all duration-200 pointer-events-none text-slate-400 dark:text-slate-500 font-medium"
-                           :class="focused || val.length > 0 ? '-top-3 text-xs bg-white dark:bg-[#1e293b] px-1 text-blue-600 dark:text-blue-400' : 'top-3.5 text-sm'">
+                    <label for="id_password" class="absolute left-10 pointer-events-none text-slate-400 dark:text-slate-500 font-medium"
+                           :class="focused || val.length > 0 ? '-top-3 text-xs bg-white dark:bg-[#1e293b] px-1 text-blue-600 dark:text-blue-400' : 'top-3.5 text-sm'"
+                           style="transition: top 160ms ease-out, font-size 160ms ease-out, color 160ms ease;">
                         Password
                     </label>
                     <div class="relative flex items-center">
@@ -113,11 +112,18 @@
 </div>
 
 <style>
-    /* Premium visual effects */
-    @keyframes shine {
-        100% { transform: translateX(150%); }
+    /* Shine on hover only — not an infinite loop */
+    .btn-shine-wrap { overflow: hidden; position: relative; }
+    .btn-shine {
+        position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+        transform: translateX(-150%) skewX(-20deg);
+        transition: transform 0ms;
     }
-    .animate-shine { animation: shine 1.5s ease-in-out infinite; }
+    .btn-shine-wrap:hover .btn-shine {
+        transform: translateX(150%) skewX(-20deg);
+        transition: transform 600ms ease-out;
+    }
 </style>
 
 <script>

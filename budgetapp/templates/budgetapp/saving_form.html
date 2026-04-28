@@ -1,37 +1,37 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="form-card anim-slide-up">
-    <div class="form-title dark:text-white dark:border-dark-border">
-        <i class="fas fa-leaf text-emerald-500 mr-2"></i> Log Savings
-    </div>
-
-    <form method="post" novalidate>
-        {% csrf_token %}
-        <div class="space-y-5">
-            {% for field in form %}
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">
-                    {{ field.label }}
-                    {% if field.field.required %}<span class="text-rose-500 ml-0.5">*</span>{% endif %}
-                </label>
-                {{ field }}
-                {% if field.errors %}
-                <ul class="errorlist mt-1">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                {% endif %}
+<div class="max-w-lg mx-auto anim-slide-up">
+    <a href="{% url 'savings_list' %}" class="inline-flex items-center text-sm font-semibold text-slate-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors mb-6 group">
+        <i class="fas fa-arrow-left mr-1.5 transition-transform group-hover:-translate-x-1"></i> Back to Savings
+    </a>
+    <div class="bg-white dark:bg-dark-surface rounded-2xl border border-slate-100 dark:border-dark-border shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-100 dark:border-dark-border flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-leaf text-emerald-500 text-sm"></i>
             </div>
-            {% endfor %}
+            <h2 class="text-base font-bold text-slate-800 dark:text-white">Log Savings</h2>
         </div>
-
-        <div class="flex items-center justify-end gap-3 mt-8 pt-5 border-t border-gray-100 dark:border-dark-border">
-            <a href="{% url 'savings_list' %}" class="px-5 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl transition-all">
-                Cancel
-            </a>
-            <button type="submit"
-                class="px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 rounded-xl shadow-lg shadow-emerald-500/25 active:scale-95 transition-all"
-                onclick="this.innerHTML='<i class=\'fas fa-spinner fa-spin mr-2\'></i>Saving...'; this.disabled=true; this.form.submit();">
-                Save
-            </button>
+        <div class="p-6">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="space-y-5">
+                    {% for field in form %}
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-1.5">
+                            {{ field.label }}{% if field.field.required %}<span class="text-rose-500 ml-0.5">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}<ul class="errorlist mt-1">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                        {% if field.help_text %}<p class="text-xs text-slate-400 mt-1">{{ field.help_text }}</p>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="flex items-center justify-end gap-3 mt-8 pt-5 border-t border-slate-100 dark:border-dark-border">
+                    <a href="{% url 'savings_list' %}" class="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl transition-colors">Cancel</a>
+                    <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm shadow-emerald-500/20 transition-colors active:scale-[0.97]">Save</button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 {% endblock %}

@@ -48,22 +48,35 @@
     </style>
     
     <style>
-        /* ─── CSS Custom Properties ─────────────────────────────── */
+        /* ─── Design Tokens ──────────────────────────────────────── */
         :root {
-            --surface:    #ffffff;
-            --surface-2:  #f8fafc;
-            --border:     #e2e8f0;
-            --text-muted: #64748b;
-            --radius:     1rem;
-            --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-            --shadow-md:  0 4px 16px rgba(0,0,0,.08);
-            --shadow-lg:  0 8px 32px rgba(0,0,0,.12);
+            --hue:         243;
+            --primary:     oklch(52% 0.22 var(--hue));
+            --primary-dim: oklch(45% 0.18 var(--hue));
+            --primary-soft:oklch(96% 0.03 var(--hue));
+            --green:       oklch(58% 0.18 150);
+            --red:         oklch(56% 0.22 25);
+            --surface:     oklch(99.5% 0.004 var(--hue));
+            --surface-2:   oklch(97.5% 0.005 var(--hue));
+            --border:      oklch(91% 0.01 var(--hue));
+            --text-1:      oklch(18% 0.015 var(--hue));
+            --text-2:      oklch(50% 0.01 var(--hue));
+            --text-muted:  oklch(55% 0.01 var(--hue));
+            --radius:      1rem;
+            --shadow-sm:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+            --shadow-md:   0 4px 16px rgba(0,0,0,.08);
+            --shadow-lg:   0 8px 32px rgba(0,0,0,.12);
+            --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+            --dur-fast:    140ms;
+            --dur-base:    220ms;
         }
         .dark {
-            --surface:    #1e293b;
-            --surface-2:  #0f172a;
-            --border:     #334155;
-            --text-muted: #94a3b8;
+            --surface:    oklch(22% 0.02 var(--hue));
+            --surface-2:  oklch(15% 0.02 var(--hue));
+            --border:     oklch(32% 0.025 var(--hue));
+            --text-1:     oklch(96% 0.005 var(--hue));
+            --text-2:     oklch(72% 0.01 var(--hue));
+            --text-muted: oklch(60% 0.01 var(--hue));
         }
 
         /* ─── Glassmorphism ──────────────────────────────────────── */
@@ -272,35 +285,31 @@
         </div>
 
         <!-- Navigation Links -->
-        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto lg:px-[20px] lg:group-hover:px-4 transition-all duration-300">
+        <nav class="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto" style="padding-left:12px;padding-right:12px;">
             {% url 'dashboard' as url_dashboard %}
-            <a href="{{ url_dashboard }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_dashboard or request.resolver_match.url_name == 'dashboard' %}bg-indigo-50 text-indigo-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
-                <i class="fas fa-home w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_dashboard or request.resolver_match.url_name == 'dashboard' %}text-indigo-600{% else %}text-slate-400{% endif %}"></i>
-                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Dashboard</span>
+            <a href="{{ url_dashboard }}" class="nav-link flex items-center px-3 py-2.5 rounded-xl {% if request.path == url_dashboard or request.resolver_match.url_name == 'dashboard' %}nav-active{% else %}nav-idle{% endif %}">
+                <i class="fas fa-home w-6 flex-shrink-0 text-center text-base"></i>
+                <span class="ml-3 text-sm font-semibold lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible" style="transition:opacity 180ms ease,visibility 180ms ease;">Dashboard</span>
             </a>
-            
             {% url 'monitoring' as url_monitoring %}
-            <a href="{{ url_monitoring }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_monitoring or request.resolver_match.url_name == 'monitoring' %}bg-purple-50 text-purple-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
-                <i class="fas fa-chart-pie w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_monitoring or request.resolver_match.url_name == 'monitoring' %}text-purple-600{% else %}text-slate-400{% endif %}"></i>
-                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Monitoring</span>
+            <a href="{{ url_monitoring }}" class="nav-link flex items-center px-3 py-2.5 rounded-xl {% if request.path == url_monitoring or request.resolver_match.url_name == 'monitoring' %}nav-active{% else %}nav-idle{% endif %}">
+                <i class="fas fa-chart-pie w-6 flex-shrink-0 text-center text-base"></i>
+                <span class="ml-3 text-sm font-semibold lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible" style="transition:opacity 180ms ease,visibility 180ms ease;">Monitoring</span>
             </a>
-            
             {% url 'savings_list' as url_savings %}
-            <a href="{{ url_savings }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_savings or request.resolver_match.url_name == 'savings_list' %}bg-emerald-50 text-emerald-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
-                <i class="fas fa-piggy-bank w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_savings or request.resolver_match.url_name == 'savings_list' %}text-emerald-600{% else %}text-slate-400{% endif %}"></i>
-                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Savings</span>
+            <a href="{{ url_savings }}" class="nav-link flex items-center px-3 py-2.5 rounded-xl {% if request.path == url_savings or request.resolver_match.url_name == 'savings_list' %}nav-active{% else %}nav-idle{% endif %}">
+                <i class="fas fa-piggy-bank w-6 flex-shrink-0 text-center text-base"></i>
+                <span class="ml-3 text-sm font-semibold lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible" style="transition:opacity 180ms ease,visibility 180ms ease;">Savings</span>
             </a>
-            
             {% url 'about' as url_about %}
-            <a href="{{ url_about }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_about or request.resolver_match.url_name == 'about' %}bg-amber-50 text-amber-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
-                <i class="fas fa-info-circle w-6 flex-shrink-0 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_about or request.resolver_match.url_name == 'about' %}text-amber-600{% else %}text-slate-400{% endif %}"></i>
-                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">About</span>
+            <a href="{{ url_about }}" class="nav-link flex items-center px-3 py-2.5 rounded-xl {% if request.path == url_about or request.resolver_match.url_name == 'about' %}nav-active{% else %}nav-idle{% endif %}">
+                <i class="fas fa-info-circle w-6 flex-shrink-0 text-center text-base"></i>
+                <span class="ml-3 text-sm font-semibold lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible" style="transition:opacity 180ms ease,visibility 180ms ease;">About</span>
             </a>
-            
             {% url 'contact' as url_contact %}
-            <a href="{{ url_contact }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group/item {% if request.path == url_contact or request.resolver_match.url_name == 'contact' %}bg-rose-50 text-rose-600 dark:bg-primary-600/10 dark:text-primary-400 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-border dark:hover:text-white{% endif %}">
-                <i class="fas fa-envelope flex-shrink-0 w-6 text-center text-lg transition-transform group-hover/item:scale-110 {% if request.path == url_contact or request.resolver_match.url_name == 'contact' %}text-rose-600{% else %}text-slate-400{% endif %}"></i>
-                <span class="ml-3 lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible transition-all duration-300">Contact Us</span>
+            <a href="{{ url_contact }}" class="nav-link flex items-center px-3 py-2.5 rounded-xl {% if request.path == url_contact or request.resolver_match.url_name == 'contact' %}nav-active{% else %}nav-idle{% endif %}">
+                <i class="fas fa-envelope w-6 flex-shrink-0 text-center text-base"></i>
+                <span class="ml-3 text-sm font-semibold lg:opacity-0 lg:invisible group-hover:lg:opacity-100 group-hover:lg:visible" style="transition:opacity 180ms ease,visibility 180ms ease;">Contact Us</span>
             </a>
         </nav>
 
@@ -354,38 +363,30 @@
                 
                 <!-- Messages (auto-dismiss after 5s) -->
                 {% if messages %}
-                <div class="mb-8 space-y-3" id="django-messages">
+                <div class="mb-6 space-y-2" id="django-messages">
                     {% for message in messages %}
                     <div x-data="{ show: true }"
                          x-show="show"
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="opacity-0 translate-y-[-4px]"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
                          x-transition:enter-end="opacity-100 translate-y-0"
                          x-transition:leave="transition ease-in duration-150"
                          x-transition:leave-start="opacity-100"
-                         x-transition:leave-end="opacity-0 translate-x-4"
-                         x-init="setTimeout(() => show = false, 3500);"
-                         class="relative flex items-center justify-between p-4 rounded-xl shadow-sm border overflow-hidden
-                         {% if message.tags == 'success' %}bg-green-50 text-green-800 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20
-                         {% elif message.tags == 'warning' %}bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20
-                         {% else %}bg-red-50 text-red-800 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20{% endif %}">
-
-                        <div class="flex items-center gap-3">
-                            {% if message.tags == 'success' %}
-                                <i class="fas fa-check-circle text-xl text-green-500 flex-shrink-0"></i>
-                            {% elif message.tags == 'warning' %}
-                                <i class="fas fa-exclamation-triangle text-xl text-amber-500 flex-shrink-0"></i>
-                            {% else %}
-                                <i class="fas fa-exclamation-circle text-xl text-red-500 flex-shrink-0"></i>
-                            {% endif %}
-                            <p class="font-medium text-sm">{{ message }}</p>
-                        </div>
-
-                        <button @click="show = false" class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none dark:hover:text-white rounded-lg p-1 hover:bg-black/5">
-                            <i class="fas fa-times text-sm"></i>
+                         x-transition:leave-end="opacity-0 translate-x-2"
+                         x-init="setTimeout(() => show = false, 4000);"
+                         class="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium
+                         {% if message.tags == 'success' %}bg-green-50 text-green-800 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/20
+                         {% elif message.tags == 'warning' %}bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20
+                         {% else %}bg-red-50 text-red-800 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20{% endif %}">
+                        <span class="flex-shrink-0 text-base">
+                            {% if message.tags == 'success' %}<i class="fas fa-circle-check text-green-500"></i>
+                            {% elif message.tags == 'warning' %}<i class="fas fa-triangle-exclamation text-amber-500"></i>
+                            {% else %}<i class="fas fa-circle-xmark text-red-500"></i>{% endif %}
+                        </span>
+                        <p class="flex-1">{{ message }}</p>
+                        <button @click="show = false" class="flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity focus:outline-none p-1 rounded-lg">
+                            <i class="fas fa-times text-xs"></i>
                         </button>
-
-
                     </div>
                     {% endfor %}
                 </div>
@@ -441,11 +442,43 @@
     <!-- Global Styles for Animations -->
     <style>
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.4s ease-out forwards;
+        .animate-fade-in-up { animation: fadeInUp 0.35s cubic-bezier(0.23,1,0.32,1) both; }
+
+        /* ── Nav link states ───────────────────────────── */
+        .nav-link {
+            transition: background-color 160ms ease, color 160ms ease;
+            color: #64748b;
+        }
+        .nav-link:hover { background-color: #f1f5f9; color: #0f172a; }
+        .nav-active {
+            background-color: oklch(96% 0.03 243);
+            color: oklch(45% 0.18 243);
+            font-weight: 600;
+        }
+        .dark .nav-link { color: #94a3b8; }
+        .dark .nav-link:hover { background-color: #1e293b; color: #f1f5f9; }
+        .dark .nav-active {
+            background-color: oklch(30% 0.06 243);
+            color: oklch(80% 0.12 243);
+        }
+
+        /* ── Button active feedback ─────────────────────── */
+        button:active, a.btn:active, [role="button"]:active {
+            transform: scale(0.97);
+        }
+        button, a.btn, [role="button"] {
+            transition: transform 140ms cubic-bezier(0.23,1,0.32,1),
+                        background-color 160ms ease,
+                        box-shadow 160ms ease,
+                        color 160ms ease;
+        }
+
+        /* ── Sidebar expand ─────────────────────────────── */
+        @media (min-width: 1024px) {
+            aside { transition: width 220ms cubic-bezier(0.23,1,0.32,1); }
         }
     </style>
     <!-- Global Amount Comma Formatter -->
